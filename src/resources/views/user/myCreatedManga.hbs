@@ -1,0 +1,41 @@
+<div class="container mt-5 color-white">
+    <h2>My Created Mangas</h2>
+    {{#if myUser}}
+        <a href="/manga/create" class="btn btn-success mb-3">Create New Manga</a>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Author ID</th>
+                    <th>Cover</th>
+                    <th>Summary</th>
+                    <th>Created At</th>
+                    <th>Updated At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each mangas}}
+                    <tr>
+                        <td>{{this.id}}</td>
+                        <td>{{this.name}}</td>
+                        <td>{{this.authorId}}</td>
+                        <td><img src="{{this.mangaCoverImageData}}" alt="Manga Cover" style="width: 100px; height: 100px;"></td>
+                        <td>{{this.summary}}</td>
+                        <td>{{this.createdAt}}</td>
+                        <td>{{this.updatedAt}}</td>
+                        <td>
+                            <a href="/manga/create/{{this.id}}" class="btn btn-primary">Edit chapter</a> <!-- Updated link -->
+                            <button class="btn btn-danger">Delete</button>
+                        </td>
+                    </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    {{else}}
+        <div class="alert alert-warning" role="alert">
+            User not found. Please log in.
+        </div>
+    {{/if}}
+</div>

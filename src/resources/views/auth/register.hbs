@@ -1,0 +1,42 @@
+<style>
+    .container_body  {
+        background-color: #333; /* Darker background for the container */
+        padding: 20px;
+        border-radius: 10px;
+    }
+    h2 {
+        color: #007bff; /* Blue heading */
+    }
+</style>
+
+<div class="container container_body color-white mt-5">
+    <h2>Registration</h2>
+    {{#if message}}
+    <div class="alert alert-danger" role="alert">
+        {{message}}
+    </div>
+    {{/if}}
+    <form action="/auth/register" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" class="form-control" id="name" placeholder="Enter name" name="name" required>
+        </div>
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" class="form-control" id="username" placeholder="Enter username" name="username" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" class="form-control" id="password" placeholder="Enter password" name="password" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" class="form-control" id="email" placeholder="Enter email" name="email" required>
+        </div>
+        <div class="form-group">
+            <label for="image">Profile Image:</label>
+            <input type="file" class="form-control-file" id="image" name="image">
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>

@@ -1,0 +1,81 @@
+
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+        }
+
+        .card {
+            background-color: #1e1e1e;
+            border: none;
+        }
+
+        .card-title, .card-text {
+            color: #ffffff;
+        }
+
+        .card-link {
+            color: #007bff;
+        }
+
+        .card-link:hover {
+            color: #0056b3;
+        }
+
+        .list-group-item {
+            background-color: #1e1e1e;
+            color: #ffffff;
+            border: none;
+        }
+
+        .list-group-item a {
+            color: #007bff;
+        }
+
+        .list-group-item a:hover {
+            color: #0056b3;
+        }
+
+        .manga-cover {
+            width: 100%;
+            height: auto;
+            max-height: 300px;
+            object-fit: cover;
+        }
+    </style>
+
+
+    <div class="container mt-5">
+        <!-- User Profile Section -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h1 class="card-title">{{user.name}}</h1>
+                <p class="card-text"><strong>Email:</strong> {{user.email}}</p>
+                <p class="card-text"><strong>Joined:</strong> {{user.created_at}}</p>
+                <p class="card-text"><strong>Last Updated:</strong> {{user.updated_at}}</p>
+            </div>
+        </div>
+
+        <!-- User's Manga Section -->
+        <h2 class="mt-4">Mangas by {{user.name}}</h2>
+        <div class="row">
+            {{#each mangaList}}
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                <div class="card h-100">
+                    <img src="{{this.mangaCoverImageData}}" class="card-img-top manga-cover" alt="{{this.name}} cover image">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">
+                            <a href="/manga/{{this.id}}" class="card-link">{{this.name}}</a>
+                        </h5>
+                        <p class="card-text flex-grow-1">{{this.summary}}</p>
+                        <p class="card-text"><small class="text-muted">Created: {{this.createdAt}}</small></p>
+                        <p class="card-text"><small class="text-muted">Updated: {{this.updatedAt}}</small></p>
+                    </div>
+                </div>
+            </div>
+            {{/each}}
+        </div>
+    </div>
+
+
+

@@ -1,0 +1,34 @@
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: #192c39;">
+    <div class="container">
+        <a class="navbar-brand" href="/">Zutomayo</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ml-auto">
+                {{#if myUser}}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <img src={{myUser.image}} alt="" class="user-avatar" />
+                            {{myUser.name}}
+                        </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="/user/my-created-manga">My Manga</a> <!-- Moved link -->
+                            <a class="dropdown-item" href="#" onclick="document.getElementById('logoutForm').submit();">Logout</a>
+                        </div>
+                    </li>
+                {{else}}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/auth/register">Register</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/auth/login">Login</a>
+                    </li>
+                {{/if}}
+            </ul>
+        </div>
+    </div>
+
+    <form id="logoutForm" action="/auth/logout" method="post" style="display: none;"></form>
+</nav>

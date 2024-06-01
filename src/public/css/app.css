@@ -1,0 +1,60 @@
+h1 {
+    color: #ff0000;
+    margin-bottom: 10px; }
+  
+  h3 {
+    color: #0000ff;
+    margin-bottom: 20px; }
+  
+  .card-course {
+    color: #0000ff;
+    margin-top: 20px; }
+  
+  .user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%; }
+  
+  .color-white {
+    color: white; }
+  
+    body {
+      background-color: #121212;
+      color: #ffffff;
+  }
+
+  .card {
+      background-color: #1e1e1e;
+      border: none;
+  }
+
+  .card-title, .card-text {
+      color: #ffffff;
+  }
+
+  .card-subtitle a {
+      color: #b0b0b0;
+  }
+
+  .card-subtitle a:hover {
+      color: #ffffff;
+  }
+
+  .card-link {
+      color: #007bff;
+  }
+
+  .card-link:hover {
+      color: #0056b3;
+  }
+
+  .text-muted {
+      color: #b0b0b0 !important;
+  }
+
+  .manga-cover {
+      width: 100%;
+      height: auto;
+      max-height: 300px;
+      object-fit: cover;
+  }

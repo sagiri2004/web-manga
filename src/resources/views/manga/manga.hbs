@@ -1,0 +1,105 @@
+<style>
+    .manga-container {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 20px;
+    }
+
+    .manga-info {
+        flex: 1;
+    }
+
+    .chapter-list {
+        flex: 1;
+        max-height: 600px; /* Adjust this value based on your design */
+        overflow-y: auto;
+        border: 1px solid #444; /* Darker border */
+        padding: 15px;
+        background-color: #333; /* Dark background */
+        color: #fff; /* Light text */
+    }
+
+    .manga-cover {
+        width: 100%;
+        height: auto;
+        max-height: 500px; /* Adjust this value based on your design */
+        object-fit: cover;
+        margin-bottom: 20px;
+    }
+
+    .genres {
+        margin-top: 20px;
+    }
+
+    .genres a {
+        display: inline-block;
+        margin-right: 10px;
+        margin-bottom: 5px;
+        padding: 5px 10px;
+        background-color: #555; /* Darker background */
+        border-radius: 5px;
+        text-decoration: none;
+        color: #00aaff; /* Light blue text */
+    }
+
+    .genres a:hover {
+        background-color: #00aaff; /* Light blue background */
+        color: #ffffff; /* White text */
+    }
+
+    body {
+        background-color: #222; /* Dark background for the whole page */
+        color: #fff; /* Light text */
+    }
+
+    .card {
+        background-color: #444; /* Darker background for card */
+        color: #fff; /* Light text */
+    }
+
+    .list-group-item {
+        background-color: #444; /* Darker background for list items */
+        border: 1px solid #555; /* Darker border */
+        color: #fff; /* Light text */
+    }
+
+    .list-group-item a {
+        color: #00aaff; /* Light blue links */
+    }
+
+    .list-group-item a:hover {
+        color: #ffffff; /* White text on hover */
+    }
+</style>
+
+<div class="container mt-5">
+    <div class="manga-container">
+        <div class="manga-info">
+            <div class="card mb-4">
+                <img src="{{manga.manga_cover_image_data}}" class="card-img-top manga-cover" alt="{{manga.manga_name}} cover image">
+                <div class="card-body">
+                    <h1 class="card-title">{{manga.manga_name}}</h1>
+                    <p class="card-text">{{manga.summary}}</p>
+                    <a href="/user/{{manga.author_id}}" class="card-link">{{manga.author_name}}</a>
+                    <div class="genres">
+                        <h5>Genres:</h5>
+                        {{#each genres}}
+                        <a href="/genres/{{this.name}}">{{this.name}}</a>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chapter-list">
+            <h2>Chapters</h2>
+            <ul class="list-group list-group-flush">
+                {{#each chapters}}
+                <li class="list-group-item">
+                    <a href="/chapter/{{this.chapter_id}}">{{this.chapter_name}}</a>
+                </li>
+                {{/each}}
+            </ul>
+        </div>
+    </div>
+</div>

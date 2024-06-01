@@ -1,0 +1,57 @@
+
+    <style>
+        body {
+            background-color: #222;
+            color: #fff;
+        }
+        .chapter-container {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .chapter-image {
+            width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            margin-bottom: 20px;
+        }
+        .btn-custom {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-custom:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .btn-custom-light {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        .btn-custom-light:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
+        .btn-color-light {
+            color: #fff;
+        }
+    </style>
+
+
+    <div class="container mt-5">
+        <div class="chapter-container">
+            <img src="{{chapter.chapter_image_data}}" alt="Chapter Image" class="chapter-image">
+            <div class="d-flex justify-content-between">
+                {{#if aroundChapter.previous_chapter_id}}
+                    <a href="/chapter/{{aroundChapter.previous_chapter_id}}" class="btn btn-custom" style="color: white;">Previous Chapter</a>
+                {{else}}
+                    <button class="btn btn-custom-light" disabled style="color: white;">Previous Chapter</button>
+                {{/if}}
+                
+                {{#if aroundChapter.next_chapter_id}}
+                    <a href="/chapter/{{aroundChapter.next_chapter_id}}" class="btn btn-custom" style="color: white;">Next Chapter</a>
+                {{else}}
+                    <button class="btn btn-custom-light" disabled style="color: white;">Next Chapter</button>
+                {{/if}}
+            </div>
+        </div>
+    </div>

@@ -1,0 +1,60 @@
+<style>
+    .container_body {
+        background-color: #333; /* Darker background for the container */
+        padding: 20px;
+        border-radius: 10px;
+    }
+    h1 {
+        color: #007bff; /* Blue heading */
+    }
+</style>
+
+{{#if myUser}}
+<div class="container container_body color-white mt-5">
+    <h2>Create Manga</h2>
+    {{#if message}}
+    <div class="alert alert-danger" role="alert">
+        {{message}}
+    </div>
+    {{/if}}
+    <form action="/manga/create" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="title">Name</label>
+            <input type="text" class="form-control" id="title" name="name" required>
+        </div>
+        <div class="form-group">
+            <label for="manga_cover">Manga Cover</label>
+            <input type="file" class="form-control-file" id="manga_cover" name="manga_cover" accept="image/*" required>
+        </div>
+        <div class="form-group">
+            <label for="summary">Summary</label>
+            <textarea class="form-control" id="summary" name="summary" rows="3" required></textarea>
+        </div>
+        <div class="form-group">
+            <label>Genres</label>
+            <div class="row">
+                {{#each genres}}
+                <div class="col-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="{{this.name}}" id="{{this.id}}" name="genres">
+                        <label class="form-check-label" for="{{this.id}}">
+                            {{this.name}}
+                        </label>
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Create</button>
+    </form>
+</div>
+{{else}}
+    <div class="alert alert-warning mt-5" role="alert">
+        Please log in to create a manga.
+    </div>
+    <script type="text/javascript">
+        setTimeout(function(){
+            window.location.href = '/auth/login';
+        }, 3000);
+    </script>
+{{/if}}
