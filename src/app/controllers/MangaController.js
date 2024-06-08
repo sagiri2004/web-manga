@@ -3,6 +3,7 @@ const path = require("path");
 const { conn } = require("../../config/database");
 const fs = require("fs");
 const { decodeToken } = require("../../util/tokenUtil");
+const { formatDate } = require("../../util/dateUtil");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -73,8 +74,30 @@ class MangaController {
 
   async getCreateChapter(req, res) {
     const mangaId = req.params.id;
-    //console.log(mangaId);
-    res.render("manga/createChapter", { mangaId });
+    conn(async (err, conn) => {
+      if (err) {
+        console.error("Error occurred while connecting to the database:", err);
+        return;
+      }
+
+      const query = `EXEC get_chapters_by_manga_id ${mangaId}`;
+      conn.query(query, (err, chapters) => {
+        if (err) {
+          console.error("Error occurred while executing the query:", err);
+          return;
+        }
+
+        // sửa lại created at và updated at để hiện thị đep hơn
+        for (let i = 0; i < chapters.length; i++) {
+          chapters[i].created_at = formatDate(chapters[i].created_at);
+          chapters[i].updated_at = formatDate(chapters[i].updated_at);
+        }
+
+        // console.log({ mangaId, chapters });
+
+        res.render("manga/createChapter", { mangaId, chapters });
+      });
+    });
   }
 
   async createChapter(req, res) {
@@ -124,7 +147,7 @@ class MangaController {
         }
       }
 
-      res.redirect("/");
+      res.redirect(`/manga/create/${manga_id}`);
     });
   }
 
@@ -155,7 +178,9 @@ class MangaController {
           //console.log(chapters);
 
           // thêm string data:image/png;base64, vào trước chapter_image_data và manga_cover_image_data
-          manga[0].manga_cover_image_data = `data:image/png;base64,${manga[0].manga_cover_image_data.toString("base64")}`;
+          manga[0].manga_cover_image_data = `data:image/png;base64,${manga[0].manga_cover_image_data.toString(
+            "base64"
+          )}`;
           manga = manga[0];
           const query3 = `EXEC get_genres_by_manga_id ${mangaId}`;
           conn.query(query3, (err, genres) => {
@@ -166,7 +191,186 @@ class MangaController {
               );
               return;
             }
-            res.render("manga/manga", { manga, chapters, genres });
+            const message = req.cookies.message;
+            res.clearCookie("message");
+            res.render("manga/manga", { manga, chapters, genres, message });
+          });
+        });
+      });
+    });
+  }
+
+  async deleteChapter(req, res) {
+    const chapterId = req.params.chapterid;
+    const mangaId = req.params.mangaid;
+    const userId = decodeToken(req.cookies.token).user_id;
+
+    const query = `EXEC get_author_id_by_manga_id ${mangaId}`;
+    conn((err, conn) => {
+      if (err) {
+        console.error("Error occurred while connecting to the database:", err);
+        return;
+      }
+
+      conn.query(query, (err, authorId) => {
+        if (err) {
+          console.error("Error occurred while executing the query:", err);
+          return;
+        }
+
+        if (authorId[0].author_id !== userId) {
+          res.render("404");
+          return;
+        }
+
+        const query2 = `EXEC delete_chapter ${mangaId}, ${chapterId}`;
+        conn.query(query2, (err, results) => {
+          if (err) {
+            console.error("Error occurred while executing the query:", err);
+            return;
+          }
+
+          res.redirect(`/manga/create/${mangaId}`);
+        });
+      });
+    });
+  }
+
+  async deleteManga(req, res) {
+    const mangaId = req.params.id;
+    const userId = decodeToken(req.cookies.token).user_id;
+
+    const query = `EXEC get_author_id_by_manga_id ${mangaId}`;
+    conn((err, conn) => {
+      if (err) {
+        console.error("Error occurred while connecting to the database:", err);
+        return;
+      }
+
+      conn.query(query, (err, authorId) => {
+        if (err) {
+          console.error("Error occurred while executing the query:", err);
+          return;
+        }
+
+        if (authorId[0].author_id !== userId) {
+          res.render("404");
+          return;
+        }
+
+        const query2 = `EXEC delete_manga ${mangaId}`;
+        conn.query(query2, (err, results) => {
+          if (err) {
+            console.error("Error occurred while executing the query:", err);
+            return;
+          }
+
+          res.redirect("/user/my-created-manga");
+        });
+      });
+    });
+  }
+
+  async getEditManga(req, res) {
+    const mangaId = req.params.id;
+    const userId = decodeToken(req.cookies.token).user_id;
+    const query = `EXEC get_author_id_by_manga_id ${mangaId}`;
+    conn((err, conn) => {
+      if (err) {
+        console.error("Error occurred while connecting to the database:", err);
+        return;
+      }
+      conn.query(query, (err, authorId) => {
+        if (err) {
+          console.error("Error occurred while executing the query:", err);
+          return;
+        }
+        if (authorId[0].author_id !== userId) {
+          res.render("404");
+          return;
+        }
+        const query2 = `EXEC get_manga_by_id ${mangaId}`;
+        conn.query(query2, (err, manga) => {
+          if (err) {
+            console.error("Error occurred while executing the query:", err);
+            return;
+          }
+          const query3 = `SELECT * FROM view_all_genres`;
+          conn.query(query3, (err, genres) => {
+            if (err) {
+              console.error("Error occurred while executing the query:", err);
+              return;
+            }
+
+            const query4 = `EXEC get_genres_by_manga_id ${mangaId}`;
+            conn.query(query4, (err, mangaGenres) => {
+              if (err) {
+                console.error("Error occurred while executing the query:", err);
+                return;
+              }
+
+              // console.log(mangaGenres);
+
+              // Gắn cờ is_selected cho các genre đã chọn
+              genres.forEach((genre) => {
+                genre.is_selected = mangaGenres.some(
+                  (mg) => mg.name === genre.name
+                );
+              });
+
+              // console.log(genres);
+              // chuyển đổi dữ liệu image data sang base64
+              manga[0].manga_cover_image_data = `data:image/png;base64,${manga[0].manga_cover_image_data.toString(
+                "base64"
+              )}`;
+
+              res.render("manga/edit", { manga: manga[0], genres });
+            });
+          });
+        });
+      });
+    });
+  }
+
+  async editManga(req, res) {
+    upload.single("manga_cover")(req, res, async (err) => {
+      if (err) {
+        console.error("Error uploading file:", err);
+        return;
+      }
+
+      const mangaId = req.params.id;
+      const userId = decodeToken(req.cookies.token).user_id;
+      const { name, summary, genres } = req.body;
+      const coverImagePath = path.join("E:\\demo", req.file.filename);
+      const coverImageData = fs.readFileSync(coverImagePath);
+      const coverImage = `0x${coverImageData.toString("hex")}`;
+      const genresString = genres.join(",");
+      const query = `EXEC get_author_id_by_manga_id ${mangaId}`;
+      const query2 = `EXEC update_manga @manga_id=${mangaId}, @name=N'${name}', @summary=N'${summary}', @manga_cover_image_data=${coverImage}, @genres=N'${genresString}'`;
+      conn((err, conn) => {
+        if (err) {
+          console.error(
+            "Error occurred while connecting to the database:",
+            err
+          );
+          return;
+        }
+        conn.query(query, (err, authorId) => {
+          if (err) {
+            console.error("Error occurred while executing the query:", err);
+            return;
+          }
+          if (authorId[0].author_id !== userId) {
+            res.render("404");
+            return;
+          }
+          conn.query(query2, (err, results) => {
+            if (err) {
+              console.error("Error occurred while executing the query:", err);
+              return;
+            }
+            res.redirect(`/manga/${mangaId}`);
           });
         });
       });

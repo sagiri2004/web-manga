@@ -1,99 +1,110 @@
-<style>
-    body {
-        background-color: #222; /* Dark background for the whole page */
-        color: #fff; /* Light text */
-    }
+{{#if myUser}}
+<div class="container container_body mt-5">
+    <h1>Created Chapters</h1>
+    <table class="table table-striped table-dark">
+        <thead>
+            <tr>
+                <th scope="col">Chapter Name</th>
+                <th scope="col">Number</th>
+                <th scope="col">Created At</th>
+                <th scope="col">Updated At</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each chapters as |chapter|}}
+            <tr>
+                <td>{{chapter.chapter_name}}</td>
+                <td>{{chapter.number}}</td>
+                <td>{{chapter.created_at}}</td>
+                <td>{{chapter.updated_at}}</td>
+                <td>
+                    <button type="button" class="btn btn-outline-light delete-chapter" data-id="{{chapter.chapter_id}}">Delete</button>
+                </td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>
 
-    .container_body {
-        background-color: #333; /* Darker background for the container */
-        padding: 20px;
-        border-radius: 10px;
-    }
-
-    .form-group label {
-        color: #ccc; /* Lighter text for labels */
-    }
-
-    h1 {
-        color: #007bff; /* Blue heading */
-    }
-
-    .form-control, .form-control-file {
-        background-color: #444; /* Dark background for form controls */
-        color: #fff; /* Light text for form controls */
-        border: 1px solid #555; /* Darker border for form controls */
-    }
-
-    .btn-primary {
-        background-color: #007bff;
-        border-color: #007bff;
-    }
-
-    .btn-primary:hover {
-        background-color: #0056b3;
-        border-color: #0056b3;
-    }
-
-    .btn-success {
-        background-color: #28a745;
-        border-color: #28a745;
-    }
-
-    .btn-success:hover {
-        background-color: #218838;
-        border-color: #1e7e34;
-    }
-</style>
-
-
-<body>
-  <div class="container container_body mt-5 color-white">
+<div class="container container_body mt-5">
     <h1>Create Chapters</h1>
-    <form action="/manga/create/{{mangaId}}" method="post" enctype="multipart/form-data">
-      <div id="chapters">
-        <div class="chapter mb-4">
-          <div class="form-group">
-            <label for="chapter_name_1">Chapter Name</label>
-            <input type="text" class="form-control" id="chapter_name_1" name="chapter[0][name]" required>
-          </div>
-          <div class="form-group">
-            <label for="chapter_number_1">Chapter Number</label>
-            <input type="number" class="form-control" id="chapter_number_1" name="chapter[0][number]" required>
-          </div>
-          <div class="form-group">
-            <label for="chapter_image_1">Chapter Image</label>
-            <input type="file" class="form-control-file" id="chapter_image_1" name="chapter_image_data" required>
-          </div>
+    <form action="/manga/create/{{mangaId}}" method="post" enctype="multipart/form-data" id="chapter-form">
+        <div id="chapters">
+            <div class="chapter mb-4" id="chapter_0">
+                <div class="form-group">
+                    <label for="chapter_name_0">Chapter Name</label>
+                    <input type="text" class="form-control" id="chapter_name_0" name="chapter[0][name]" required>
+                </div>
+                <div class="form-group">
+                    <label for="chapter_number_0">Chapter Number</label>
+                    <input type="number" class="form-control" id="chapter_number_0" name="chapter[0][number]" required>
+                </div>
+                <div class="form-group">
+                    <label for="chapter_image_0">Chapter Image</label>
+                    <input type="file" class="form-control-file" id="chapter_image_0" name="chapter_image_data" required>
+                </div>
+                <button type="button" class="btn btn-danger remove-chapter" onclick="removeChapter(0)">Remove</button>
+            </div>
         </div>
-      </div>
-      {{!-- <button type="button" id="add-chapter" class="btn btn-primary mb-3">Add Chapter</button> --}}
-      <button type="submit" class="btn btn-success">Submit</button>
+        <button type="button" class="btn btn-primary" id="add-chapter">Add Chapter</button>
+        <button type="submit" class="btn btn-success">Submit</button>
     </form>
-  </div>
+</div>
 
-  <script>
+<!-- Hidden form for deleting chapters -->
+<form id="delete-form" action="" method="post" style="display: none;">
+    <input type="hidden" name="_method" value="DELETE">
+</form>
+
+<script>
     let chapterCount = 1;
+    // lay ra mangaId
+    const mangaId = {{mangaId}};
 
-    document.getElementById('add-chapter').addEventListener('click', () => {
-      chapterCount++;
-      const chaptersDiv = document.getElementById('chapters');
-      const newChapter = document.createElement('div');
-      newChapter.classList.add('chapter', 'mb-4');
-      newChapter.innerHTML = `
-        <div class="form-group">
-          <label for="chapter_name_${chapterCount}">Chapter Name</label>
-          <input type="text" class="form-control" id="chapter_name_${chapterCount}" name="chapter[${chapterCount - 1}][name]" required>
-        </div>
-        <div class="form-group">
-          <label for="chapter_number_${chapterCount}">Chapter Number</label>
-          <input type="number" class="form-control" id="chapter_number_${chapterCount}" name="chapter[${chapterCount - 1}][number]" required>
-        </div>
-        <div class="form-group">
-          <label for="chapter_image_${chapterCount}">Chapter Image</label>
-          <input type="file" class="form-control-file" id="chapter_image_${chapterCount}" name="chapter_image_data" required>
-        </div>
-      `;
-      chaptersDiv.appendChild(newChapter);
+    document.getElementById('add-chapter').addEventListener('click', function() {
+        let chapterDiv = document.createElement('div');
+        chapterDiv.classList.add('chapter', 'mb-4');
+        chapterDiv.id = 'chapter_' + chapterCount;
+
+        chapterDiv.innerHTML = `
+            <div class="form-group">
+                <label for="chapter_name_${chapterCount}">Chapter Name</label>
+                <input type="text" class="form-control" id="chapter_name_${chapterCount}" name="chapter[${chapterCount}][name]" required>
+            </div>
+            <div class="form-group">
+                <label for="chapter_number_${chapterCount}">Chapter Number</label>
+                <input type="number" class="form-control" id="chapter_number_${chapterCount}" name="chapter[${chapterCount}][number]" required>
+            </div>
+            <div class="form-group">
+                <label for="chapter_image_${chapterCount}">Chapter Image</label>
+                <input type="file" class="form-control-file" id="chapter_image_${chapterCount}" name="chapter_image_data" required>
+            </div>
+            <button type="button" class="btn btn-danger remove-chapter" onclick="removeChapter(${chapterCount})">Remove</button>
+        `;
+
+        document.getElementById('chapters').appendChild(chapterDiv);
+        chapterCount++;
     });
-  </script>
 
+    function removeChapter(index) {
+        let chapterDiv = document.getElementById('chapter_' + index);
+        chapterDiv.remove();
+    }
+
+    document.querySelectorAll('.delete-chapter').forEach(button => {
+        button.addEventListener('click', function() {
+            const chapterId = this.getAttribute('data-id');
+            if (confirm('Are you sure you want to delete this chapter?')) {
+                const form = document.getElementById('delete-form');
+                form.action = `/manga/deleteChapter/${mangaId}/${chapterId}?_method=DELETE`;
+                form.submit();
+            }
+        });
+    });
+</script>
+{{else}}
+<div class="container container_body mt-5">
+    <h1>Please log in to create chapters</h1>
+</div>
+{{/if}}

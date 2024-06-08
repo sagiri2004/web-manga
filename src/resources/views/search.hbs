@@ -1,0 +1,21 @@
+<div class="container mt-5">
+    <h1 class="mb-4">Search results for "{{searchQuery}}"</h1>
+    <div class="row">
+        {{#each mangas}}
+        <div class="col-md-4">
+            <div class="card mb-4 shadow-sm">
+                <img class="card-img-top" src="{{this.manga_cover_image_data}}" alt="{{this.name}}">
+                <div class="card-body">
+                    <h5 class="card-title">{{this.name}}</h5>
+                    <p class="card-text">{{this.description}}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="btn-group">
+                            <a href="/manga/{{this.id}}" class="btn btn-sm btn-outline-secondary">Read More</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+</div>

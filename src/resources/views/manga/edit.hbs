@@ -11,25 +11,25 @@
 
 {{#if myUser}}
 <div class="container container_body color-white mt-5">
-    <h2>Create Manga</h2>
+    <h2>Edit Manga</h2>
     {{#if message}}
     <div class="alert alert-danger" role="alert">
         {{message}}
     </div>
     {{/if}}
-    
-    <form action="/manga/create" method="post" enctype="multipart/form-data">
+    <form action="/manga/edit/{{manga.manga_id}}?_method=PUT" method="post" enctype="multipart/form-data">
         <div class="form-group">
             <label for="title">Name</label>
-            <input type="text" class="form-control" id="title" name="name" required>
+            <input type="text" class="form-control" id="title" name="name" value="{{manga.manga_name}}" required>
         </div>
         <div class="form-group">
             <label for="manga_cover">Manga Cover</label>
-            <input type="file" class="form-control-file" id="manga_cover" name="manga_cover" accept="image/*" required>
+            <input type="file" class="form-control-file" id="manga_cover" name="manga_cover" accept="image/*">
+            <img src="{{manga.manga_cover_image_data}}" alt="Current cover" style="width: 200px; height: 300px; object-fit: cover;">
         </div>
         <div class="form-group">
             <label for="summary">Summary</label>
-            <textarea class="form-control" id="summary" name="summary" rows="3" required></textarea>
+            <textarea class="form-control" id="summary" name="summary" rows="3" required>{{manga.summary}}</textarea>
         </div>
         <div class="form-group">
             <label>Genres</label>
@@ -37,7 +37,7 @@
                 {{#each genres}}
                 <div class="col-3">
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="{{this.name}}" id="{{this.id}}" name="genres">
+                        <input class="form-check-input" type="checkbox" value="{{this.name}}" id="{{this.id}}" name="genres" {{#if this.is_selected}}checked{{/if}}>
                         <label class="form-check-label" for="{{this.id}}">
                             {{this.name}}
                         </label>
@@ -46,7 +46,7 @@
                 {{/each}}
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Create</button>
+        <button type="submit" class="btn btn-primary">Update</button>
     </form>
 </div>
 {{else}}

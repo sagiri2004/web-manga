@@ -14,6 +14,12 @@ class ChapterController {
           console.error("Error occurred while executing the query:", err);
           return;
         }
+
+        if (chapter[0].chapter_image_data === null) {
+          res.render("404");
+          return;
+        }
+
         // thêm string data:image/png;base64, vào trước chapter_image_data
         chapter[0].chapter_image_data = `data:image/png;base64,${chapter[0].chapter_image_data.toString("base64")}`;
         
@@ -32,5 +38,6 @@ class ChapterController {
       });
     });
   }
+
 }
 module.exports = new ChapterController();

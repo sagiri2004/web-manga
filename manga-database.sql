@@ -40,6 +40,7 @@ CREATE TABLE users_mangas (
     manga_id INT,
     is_favorite BIT DEFAULT 0,
     rating INT DEFAULT NULL,
+    PRIMARY KEY (user_id, manga_id),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (manga_id) REFERENCES mangas(id)
 );
@@ -175,7 +176,8 @@ END;
 GO
 
 ------------------------------------------------------------
-
+------------------------------------------------------------
+-- Manga logic ---------------------------------------------
 
 -- Create stored procedure to insert manga genres
 CREATE PROCEDURE insert_manga_genres
@@ -274,6 +276,67 @@ END;
 -- test get manga by id
 EXEC get_manga_by_id 1;
 
+-- lấy ra id của user tạo ra một manga với @manga_id
+CREATE PROCEDURE get_author_id_by_manga_id
+    @manga_id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT author_id FROM mangas WHERE id = @manga_id;
+END;
+
+-- test get author id by manga id
+EXEC get_author_id_by_manga_id 1;
+
+-- update manga
+-- chỉ cho phép update name, summary, manga_cover_image_data và updated_at và genre
+
+CREATE PROCEDURE update_manga
+    @manga_id INT,
+    @name NVARCHAR(255),
+    @summary NVARCHAR(MAX),
+    @manga_cover_image_data VARBINARY(MAX),
+    @genres NVARCHAR(MAX)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE mangas
+    SET name = @name, summary = @summary, manga_cover_image_data = @manga_cover_image_data, updated_at = GETDATE()
+    WHERE id = @manga_id;
+
+    -- Xóa tất cả các genre của manga đó
+    DELETE FROM manga_genre WHERE manga_id = @manga_id;
+
+    -- Thêm lại các genre mới
+    DECLARE @genre NVARCHAR(255);
+    DECLARE @start INT = 1;
+    DECLARE @pos INT = CHARINDEX(',', @genres);
+
+    WHILE @pos > 0
+    BEGIN
+        SET @genre = LTRIM(RTRIM(SUBSTRING(@genres, @start, @pos - @start)));
+        INSERT INTO manga_genre (manga_id, genre_id)
+        SELECT @manga_id, id FROM genres WHERE name = @genre;
+
+        SET @start = @pos + 1;
+        SET @pos = CHARINDEX(',', @genres, @start);
+    END
+
+    -- Insert the last genre
+    SET @genre = LTRIM(RTRIM(SUBSTRING(@genres, @start, LEN(@genres) - @start + 1)));
+    INSERT INTO manga_genre (manga_id, genre_id)
+    SELECT @manga_id, id FROM genres WHERE name = @genre;
+END;
+
+-- test update manga
+EXEC update_manga 11, 'One Piece', 'A pirate adventure manga', 0x, 'Action, Adventure, Comedy';
+
+CREATE INDEX idx_manga_name ON mangas(name);
+
+SELECT * FROM mangas WHERE name LIKE '%na%';
+
 ------------------------------------------------------
 -- Chapter logic -------------------------------------
 
@@ -289,14 +352,16 @@ BEGIN
 
     INSERT INTO chapters (manga_id, name, number, chapter_image_data)
     VALUES (@manga_id, @name, @number, @chapter_image_data);
-END;
 
+    UPDATE mangas
+    SET updated_at = GETDATE()
+    WHERE id = @manga_id;
+END;
 -- test insert chapter
 EXEC insert_chapter 1, 'Chapter 1', 1, 0x;
 
--- trigger khi insert chapter khi insert chapter thì sẽ kiểm tra xem number của chapter đó đã tồn tại chưa
--- nếu tồn tại thì sẽ set các chapter có number lớn hơn bằng number của chapter mới thêm vào tăng lên 1
-CREATE TRIGGER check_chapter_number
+
+CREATE TRIGGER check_chapter_number_insert
 ON chapters
 AFTER INSERT
 AS
@@ -308,14 +373,50 @@ BEGIN
 
     SELECT @manga_id = manga_id, @number = number FROM inserted;
 
-    -- Adjust the number since it's automatically incremented by 1
-    SET @number = @number - 1;
+    -- Nếu number < 1 thì set number = 1
+    IF @number < 1
+    BEGIN
+        SET @number = 1;
+        UPDATE chapters
+        SET number = @number
+        WHERE manga_id = @manga_id AND number = @number;
+    END
 
-    -- Update all chapters with the same manga_id and number greater than or equal to the new chapter's number
+    -- Nếu number > số lượng chapter trong manga thì set number = số lượng chapter
+    DECLARE @max_number INT;
+    SELECT @max_number = MAX(number) FROM chapters WHERE manga_id = @manga_id;
+    IF @number > @max_number
+    BEGIN
+        SET @number = @max_number + 1;
+        UPDATE chapters
+        SET number = @number
+        WHERE manga_id = @manga_id AND number = @number;
+    END
+
+    -- Update các chapter phía sau chapter mới
     UPDATE chapters
     SET number = number + 1
-    WHERE manga_id = @manga_id AND number >= @number;
+    WHERE manga_id = @manga_id AND number >= @number AND id <> (SELECT id FROM inserted);
 END;
+
+CREATE TRIGGER check_chapter_number_delete
+ON chapters
+AFTER DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @manga_id INT;
+    DECLARE @number INT;
+
+    SELECT @manga_id = manga_id, @number = number FROM deleted;
+
+    -- Update các chapter phía sau chapter bị xóa
+    UPDATE chapters
+    SET number = number - 1
+    WHERE manga_id = @manga_id AND number > @number;
+END;
+
 
 
 -- -- create stored procedure to get chapter by manga id
@@ -403,6 +504,45 @@ BEGIN
 
     SELECT * FROM view_chapter_image_data WHERE id = @chapter_id;
 END;
+
+-- Delete chapter by id and manga_id
+CREATE PROCEDURE delete_chapter
+    @manga_id INT,
+    @chapter_id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DELETE FROM chapters WHERE id = @chapter_id AND manga_id = @manga_id;
+
+    UPDATE mangas
+    SET updated_at = GETDATE()
+    WHERE id = @manga_id;
+END;
+
+-- test delete chapter
+EXEC delete_chapter 1, 1;
+
+CREATE PROCEDURE delete_manga
+    @manga_id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Delete related records in the 'notifications' table
+    DELETE FROM notifications WHERE chapter_id IN (SELECT id FROM chapters WHERE manga_id = @manga_id);
+
+    -- Delete related records in the 'users_mangas' table
+    DELETE FROM users_mangas WHERE manga_id = @manga_id;
+
+    DELETE FROM chapters WHERE manga_id = @manga_id;
+    DELETE FROM manga_genre WHERE manga_id = @manga_id;
+    DELETE FROM mangas WHERE id = @manga_id;
+END;
+-- test delete manga
+EXEC delete_manga 1;
+
+-- tìm kiếm theo tên manga
 
 ------------------------------------------------------
 -- User - Manga logic -------------------------------
@@ -523,3 +663,55 @@ GO
 -- test get user by id
 EXEC get_user_by_id 1;
 
+-- view notifications
+CREATE VIEW view_notifications AS
+SELECT 
+    n.id AS notification_id,
+    n.user_id,
+    u.name AS user_name,
+    n.manga_id,
+    m.name AS manga_name,
+    n.chapter_id,
+    c.name AS chapter_name,
+    n.message,
+    n.created_at,
+    n.read_at
+FROM
+    notifications n
+JOIN
+    users u ON n.user_id = u.id
+JOIN
+    mangas m ON n.manga_id = m.id
+LEFT JOIN
+    chapters c ON n.chapter_id = c.id;
+
+-- test view notifications
+SELECT * FROM view_notifications;
+
+-- get notifications by user id
+CREATE PROCEDURE get_notifications_by_user_id
+    @user_id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT * FROM view_notifications WHERE user_id = @user_id;
+END;
+
+-- test get notifications by user id   
+EXEC get_notifications_by_user_id 1;
+
+-- mark notification as read
+CREATE PROCEDURE mark_notification_as_read
+    @notification_id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE notifications
+    SET read_at = GETDATE()
+    WHERE id = @notification_id;
+END;
+
+-- test mark notification as read
+EXEC mark_notification_as_read 1;

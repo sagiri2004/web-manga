@@ -117,6 +117,7 @@ class AuthController {
       if (err) {
         console.error("Error occurred while destroying the session:", err);
       } else {
+        res.clearCookie("token");
         res.clearCookie("connect.sid"); // Replace 'connect.sid' with the name of your cookie if it's different
         res.redirect("/");
       }

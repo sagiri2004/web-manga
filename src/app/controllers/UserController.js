@@ -84,6 +84,54 @@ class UserController {
       });
     });
   }
+
+  async addFavoriteManga(req, res) {
+    const token = req.cookies.token;
+    const mangaId = req.params.id;
+
+    if (!token) {
+      res.cookie("message", "Please log in to add manga to favorites", {
+        maxAge: 5000,
+      });
+      res.redirect(`/manga/${mangaId}`);
+      return;
+    }
+
+    const { user_id } = decodeToken(token);
+
+    const query = `EXEC add_favorite_manga ${user_id}, ${mangaId}`;
+    conn((err, conn) => {
+      conn.query(query, (err, result) => {
+        if (err) {
+          res.cookie("message", "Failed to add manga to favorites", {
+            maxAge: 5000,
+          });
+          return res.redirect(`/manga/${mangaId}`);
+        }
+        res.cookie("message", "Added manga to favorites successfully", {
+          maxAge: 5000,
+        });
+        return res.redirect(`/manga/${mangaId}`);
+      });
+    });
+  }
+
+  // [PUT] để đánh dấu đã đọc thông báo
+  async markAsReadNotice(req, res) {
+    const notificationId = req.params.id;
+    const query = `EXEC mark_notification_as_read ${notificationId}`;
+    conn((err, conn) => {
+      conn.query(query, (err, result) => {
+        if (err) {
+          res.status(500).json({ message: "Internal server error" });
+          return;
+        }
+        
+        res.redirect("/");
+      });
+    });
+  }
+
 }
 
 module.exports = new UserController();

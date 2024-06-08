@@ -26,10 +26,15 @@
                         <td>{{this.createdAt}}</td>
                         <td>{{this.updatedAt}}</td>
                         <td>
-                            <a href="/manga/create/{{this.id}}" class="btn btn-primary">Edit chapter</a> <!-- Updated link -->
-                            <button class="btn btn-danger">Delete</button>
+                            <a href="/manga/edit/{{this.id}}" class="btn btn-info">Edit manga</a>
+                            <a href="/manga/create/{{this.id}}" class="btn btn-primary">Edit chapter</a>
+                            <button class="btn btn-danger" onclick="confirmDeleteManga({{this.id}})">Delete</button>
                         </td>
                     </tr>
+                    <!-- Hidden form for deleting manga -->
+                    <form id="delete-form-{{this.id}}" action="/manga/deleteManga/{{this.id}}?_method=DELETE" method="post" style="display: none;">
+                        <input type="hidden" name="_method" value="DELETE">
+                    </form>
                 {{/each}}
             </tbody>
         </table>
@@ -39,3 +44,12 @@
         </div>
     {{/if}}
 </div>
+
+<script>
+    function confirmDeleteManga(mangaId) {
+        if (confirm('Are you sure you want to delete this manga?')) {
+            const form = document.getElementById('delete-form-' + mangaId);
+            form.submit();
+        }
+    }
+</script>

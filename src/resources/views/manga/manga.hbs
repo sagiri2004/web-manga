@@ -73,6 +73,11 @@
 </style>
 
 <div class="container mt-5">
+    {{#if message}}
+    <div class="alert alert-info">
+        {{message}}
+    </div>
+    {{/if}}
     <div class="manga-container">
         <div class="manga-info">
             <div class="card mb-4">
@@ -81,6 +86,9 @@
                     <h1 class="card-title">{{manga.manga_name}}</h1>
                     <p class="card-text">{{manga.summary}}</p>
                     <a href="/user/{{manga.author_id}}" class="card-link">{{manga.author_name}}</a>
+                    <form action="/user/add-favorite-manga/{{manga.manga_id}}" method="post">
+                        <button type="submit" class="btn btn-primary">Favorite</button>
+                    </form>
                     <div class="genres">
                         <h5>Genres:</h5>
                         {{#each genres}}
