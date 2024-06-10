@@ -193,7 +193,35 @@ class MangaController {
             }
             const message = req.cookies.message;
             res.clearCookie("message");
-            res.render("manga/manga", { manga, chapters, genres, message });
+            const query4 = `SELECT * FROM view_comments WHERE manga_id = ${mangaId} ORDER BY created_at DESC`;
+            conn.query(query4, (err, comments) => {
+              if (err) {
+                console.error(
+                  "Error occurred while executing the fourth query:",
+                  err
+                );
+                return;
+              }
+              // thêm string data:image/png;base64, vào trước user_avatar_image_data
+              comments.forEach((comment) => {
+                comment.user_avatar_image_data = `data:image/png;base64,${comment.user_avatar_image_data.toString(
+                  "base64"
+                )}`;
+              });
+
+              // sửa lại created at để hiện thị đep hơn
+              for (let i = 0; i < comments.length; i++) {
+                comments[i].created_at = formatDate(comments[i].created_at);
+              }
+
+              res.render("manga/manga", {
+                manga,
+                chapters,
+                genres,
+                comments,
+                message,
+              });
+            });
           });
         });
       });
@@ -373,6 +401,40 @@ class MangaController {
             res.redirect(`/manga/${mangaId}`);
           });
         });
+      });
+    });
+  }
+
+  async submitComment(req, res) {
+    const userId = decodeToken(req.cookies.token).user_id;
+    const { manga_id, comment } = req.body;
+    const query = `EXEC insert_comment @manga_id=${manga_id}, @user_id=${userId}, @comment=N'${comment}'`;
+    conn((err, conn) => {
+      if (err) {
+        console.error("Error occurred while connecting to the database:", err);
+        return;
+      }
+      conn.query(query, (err, results) => {
+        if (err) {
+          res.status(500).send("Error saving comment");
+        } else {
+          const queryUser = `SELECT * FROM view_all_users WHERE id = ${userId}`;
+          conn.query(queryUser, (err, user) => {
+            if (err) {
+              console.error("Error occurred while executing the query:", err);
+              return;
+            }
+
+            // thêm string data:image/png;base64, vào trước avatar_image_data
+            user[0].avatar_image_data = `data:image/png;base64,${user[0].avatar_image_data.toString(
+              "base64"
+            )}`;
+
+            // chuyển đổi created_at sang dạng đẹp hơn
+            user[0].created_at = formatDate(user[0].created_at);
+            res.json(user[0]);
+          });
+        }
       });
     });
   }

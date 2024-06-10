@@ -3,6 +3,8 @@ const path = require("path");
 const fs = require("fs");
 const { createToken } = require("../../util/tokenUtil");
 const { conn } = require("../../config/database");
+const bcryptjs = require("bcryptjs");
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "E:\\demo");
@@ -56,7 +58,11 @@ class AuthController {
             const imageBitData = fs.readFileSync(imageBitPath);
             imageBit = `0x${imageBitData.toString("hex")}`;
 
-            const insertUserQuery = `EXEC insert_user @name='${name}', @username='${username}', @password='${password}', @email='${email}', @role='${role}', @avatar_image_data=${imageBit}`;
+            // hash password
+            const salt = bcryptjs.genSaltSync(10);
+            const hashedPassword = bcryptjs.hashSync(password, salt);
+
+            const insertUserQuery = `EXEC insert_user @name='${name}', @username='${username}', @password='${hashedPassword}', @email='${email}', @role='${role}', @avatar_image_data=${imageBit}`;
             conn.query(insertUserQuery, () => {
               if (err) {
                 console.error("Error executing query:", err);
@@ -79,35 +85,78 @@ class AuthController {
         return res.status(500).json({ message: err.message });
       }
 
-      const query = `EXEC check_user_login @username='${username}', @password='${password}'`;
-      conn.query(query, (err, results) => {
+      const query = `EXEC get_password_by_username @username='${username}'`;
+      conn.query(query, (err, userPass) => {
         if (err) {
           console.error("Error executing query:", err);
           return res.status(500).json({ message: err.message });
         }
 
-        if (results.length === 0) {
+        if (userPass.length === 0) {
           return res.render("auth/login", {
             message: "Invalid username or password",
           });
         }
 
-        const userDetails = results[0];
-        const token = createToken(userDetails.id, userDetails.role);
-        res.cookie("token", token);
+        const validPassword = bcryptjs.compareSync(
+          password,
+          userPass[0].password
+        );
 
-        const image =
-          "data:image/jpeg;base64," +
-          Buffer.from(userDetails.avatar_image_data).toString("base64");
-        req.session.myUser = {
-          name: userDetails.name,
-          username: userDetails.username,
-          email: userDetails.email,
-          role: userDetails.role,
-          image: image,
-        };
+        if (!validPassword) {
+          return res.render("auth/login", {
+            message: "Invalid username or password",
+          });
+        }
 
-        res.redirect("/");
+        const userQuery = `EXEC get_user_by_username @username='${username}'`;
+        conn.query(userQuery, (err, results) => {
+          if (err) {
+            console.error("Error executing query:", err);
+            return res.status(500).json({ message: err.message });
+          }
+
+          // check banned
+          if (results[0].is_banned) {
+            return res.render("auth/login", {
+              message: "Your account has been banned",
+            });
+          }
+
+          const userDetails = results[0];
+          const token = createToken(userDetails.id, userDetails.role);
+          res.cookie("token", token);
+
+          const image =
+            "data:image/jpeg;base64," +
+            Buffer.from(userDetails.avatar_image_data).toString("base64");
+          req.session.myUser = {
+            name: userDetails.name,
+            username: userDetails.username,
+            email: userDetails.email,
+            role: userDetails.role,
+            image: image,
+          };
+
+          res.redirect("/");
+        });
+
+        // const userDetails = results[0];
+        // const token = createToken(userDetails.id, userDetails.role);
+        // res.cookie("token", token);
+
+        // const image =
+        //   "data:image/jpeg;base64," +
+        //   Buffer.from(userDetails.avatar_image_data).toString("base64");
+        // req.session.myUser = {
+        //   name: userDetails.name,
+        //   username: userDetails.username,
+        //   email: userDetails.email,
+        //   role: userDetails.role,
+        //   image: image,
+        // };
+
+        // res.redirect("/");
       });
     });
   }

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const mangaController = require("../app/controllers/MangaController");
 
+router.post("/submitComment", mangaController.submitComment);
 router.delete("/deleteManga/:id", mangaController.deleteManga)
 router.delete("/deleteChapter/:mangaid/:chapterid", mangaController.deleteChapter);
 router.get("/create/:id", mangaController.getCreateChapter);

@@ -1,7 +1,7 @@
 const sql = require("msnodesqlv8");
 
 const connectionString =
-  "Driver={ODBC Driver 17 for SQL Server};Server=Elaina\\SQLEXPRESS;Database=sql_manga_1;Trusted_Connection=yes;";
+  "Driver={ODBC Driver 17 for SQL Server};Server=Elaina\\SQLEXPRESS;Database=sql_manga_3;Trusted_Connection=yes;";
 
 // Function to establish connection to the database
 const conn = (callback) => {

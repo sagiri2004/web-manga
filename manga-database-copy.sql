@@ -6,14 +6,11 @@ CREATE TABLE users (
     email NVARCHAR(255) UNIQUE,
     role NVARCHAR(50) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
     avatar_image_data VARBINARY(MAX),
+    is_banned BIT DEFAULT 0,
     created_at DATETIME DEFAULT GETDATE(),
     updated_at DATETIME DEFAULT GETDATE(),
 );
-
--- thêm trường để kiểm tra trạng thái của user (ban hoặc không ban)
-ALTER TABLE users
-ADD is_banned BIT DEFAULT 0;
-
+GO
 
 CREATE TABLE mangas (
     id INT PRIMARY KEY IDENTITY,
@@ -25,12 +22,14 @@ CREATE TABLE mangas (
     updated_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (author_id) REFERENCES users(id)
 );
+GO
 
 CREATE TABLE genres (
     id INT PRIMARY KEY IDENTITY,
     description NVARCHAR(255),
     name NVARCHAR(255) NOT NULL UNIQUE
 );
+GO
 
 CREATE TABLE manga_genre (
     manga_id INT,
@@ -39,6 +38,7 @@ CREATE TABLE manga_genre (
     FOREIGN KEY (manga_id) REFERENCES mangas(id),
     FOREIGN KEY (genre_id) REFERENCES genres(id)
 );
+GO
 
 CREATE TABLE users_mangas (
     user_id INT,
@@ -49,32 +49,9 @@ CREATE TABLE users_mangas (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (manga_id) REFERENCES mangas(id)
 );
+GO
 
--- CREATE TABLE chapters (
---     id INT PRIMARY KEY IDENTITY,
---     manga_id INT NOT NULL,
---     name NVARCHAR(255) NOT NULL,
---     number INT NOT NULL,
---     created_at DATETIME DEFAULT GETDATE(),
---     updated_at DATETIME DEFAULT GETDATE(),
---     FOREIGN KEY (manga_id) REFERENCES mangas(id),
--- );
 
--- CREATE TABLE pages (
---     id INT PRIMARY KEY IDENTITY,
---     chapter_id INT NOT NULL,
---     page_image_data VARBINARY(MAX),
---     number INT NOT NULL,
---     created_at DATETIME DEFAULT GETDATE(),
---     updated_at DATETIME DEFAULT GETDATE(),
---     FOREIGN KEY (chapter_id) REFERENCES chapters(id),
--- );
-
--- xóa chapters cũ và pages cũ
-DROP TABLE pages;
-DROP TABLE chapters;
-
--- sửa lại để mỗi chapter lưu một ảnh là thuộc tính của chapter_image_data
 CREATE TABLE chapters (
     id INT PRIMARY KEY IDENTITY,
     manga_id INT NOT NULL,
@@ -85,10 +62,7 @@ CREATE TABLE chapters (
     updated_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (manga_id) REFERENCES mangas(id),
 );
-
-ALTER TABLE chapters
-ADD chapter_image_data VARBINARY(MAX);
-
+GO
 
 
 CREATE TABLE comments (
@@ -101,6 +75,7 @@ CREATE TABLE comments (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (manga_id) REFERENCES mangas(id)
 );
+GO
 
 CREATE TABLE notifications (
     id INT PRIMARY KEY IDENTITY,
@@ -114,11 +89,28 @@ CREATE TABLE notifications (
     FOREIGN KEY (manga_id) REFERENCES mangas(id),
     FOREIGN KEY (chapter_id) REFERENCES chapters(id)
 );
+GO
+
+-- 1
+-- tao du lieu cho bang genres
+INSERT INTO genres (name) VALUES ('Action');
+INSERT INTO genres (name) VALUES ('Adventure');
+INSERT INTO genres (name) VALUES ('Comedy');
+INSERT INTO genres (name) VALUES ('Drama');
+INSERT INTO genres (name) VALUES ('Fantasy');
+INSERT INTO genres (name) VALUES ('Horror');
+INSERT INTO genres (name) VALUES ('Mystery');
+INSERT INTO genres (name) VALUES ('Psychological');
+INSERT INTO genres (name) VALUES ('Romance');
+INSERT INTO genres (name) VALUES ('Sci-fi');
+INSERT INTO genres (name) VALUES ('Slice of Life');
+INSERT INTO genres (name) VALUES ('Supernatural');
+GO
 
 ------------------------------------------------------
 -- User logic ----------------------------------------
 
--- Create stored procedure to insert user
+-- 1
 CREATE PROCEDURE insert_user
     @name NVARCHAR(255),
     @username NVARCHAR(255),
@@ -141,34 +133,7 @@ BEGIN
 END;
 GO
 
--- test insert user 
-EXEC insert_user 'John Doe', 'johndoe', 'password', 'a@b.c', 'admin', 0x;
-
--- Lấy ra thông tin user với @id
-CREATE PROCEDURE get_user_by_id
-    @id INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    SELECT * FROM users WHERE id = @id;
-END;
-GO
-
--- test get user by id
-EXEC get_user_by_id 1;
-
-CREATE PROCEDURE check_user_login
-    @username NVARCHAR(255),
-    @password NVARCHAR(255)
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    SELECT * FROM dbo.users WHERE username = @username AND password = @password;
-END;
-GO
-
+-- 1
 CREATE PROCEDURE check_user_exists
     @username NVARCHAR(255),
     @email NVARCHAR(255)
@@ -180,18 +145,17 @@ BEGIN
 END;
 GO
 
--- get password by username
--- Kiểm tra nếu chỉ mục đã tồn tại và xóa nó (nếu cần thiết)
-IF EXISTS (SELECT name FROM sys.indexes WHERE name = 'idx_username' AND object_id = OBJECT_ID('dbo.users'))
-BEGIN
-    DROP INDEX idx_username ON dbo.users;
-END
+-- 1
+-- IF EXISTS (SELECT name FROM sys.indexes WHERE name = 'idx_username' AND object_id = OBJECT_ID('dbo.users'))
+-- BEGIN
+--     DROP INDEX idx_username ON dbo.users;
+-- END
 
--- Tạo chỉ mục
+-- 1
 CREATE INDEX idx_username ON dbo.users (username);
 GO
 
--- Tạo thủ tục lưu trữ
+-- 1
 CREATE PROCEDURE get_password_by_username
     @username NVARCHAR(255)
 AS
@@ -202,10 +166,7 @@ BEGIN
 END;
 GO
 
--- Gọi thủ tục lưu trữ
-EXEC get_password_by_username 'johndoe';
-
--- get user by username
+-- 1
 CREATE PROCEDURE get_user_by_username
     @username NVARCHAR(255)
 AS
@@ -214,11 +175,9 @@ BEGIN
 
     SELECT * FROM dbo.users WHERE username = @username;
 END;
+GO
 
--- test get user by username
-EXEC get_user_by_username 'johndoe';
-
--- ban user by id
+-- 1
 CREATE PROCEDURE ban_user
     @user_id INT
 AS
@@ -229,11 +188,9 @@ BEGIN
     SET is_banned = 1
     WHERE id = @user_id;
 END;
+GO
 
--- test ban user
-EXEC ban_user 1;
-
--- unban user by id
+-- 1
 CREATE PROCEDURE unban_user
     @user_id INT
 AS
@@ -244,18 +201,17 @@ BEGIN
     SET is_banned = 0
     WHERE id = @user_id;
 END;
+GO
 
--- test unban user
-EXEC unban_user 1;
 
--- gan index cho id
+-- 1
 CREATE INDEX idx_user_id ON users(id);
+GO
 
-------------------------------------------------------------
 ------------------------------------------------------------
 -- Manga logic ---------------------------------------------
 
--- Create stored procedure to insert manga genres
+-- 1
 CREATE PROCEDURE insert_manga_genres
     @name NVARCHAR(255),
     @author_id INT,
@@ -298,14 +254,7 @@ BEGIN
 END;
 GO
 
--- Execute the procedure with sample data
-EXEC insert_manga_genres 'One Piece', 3, 0x, 'A pirate adventure manga', 'Adventure, Comedy';
-
-
--- test insert manga
-EXEC insert_manga_genres 'One Piece', 1, 0x, 'A pirate adventure manga', 'Action, Adventure, Comedy';
-
--- lay ra manga ma user co @id da tao
+-- 1
 CREATE PROCEDURE get_manga_by_author_id
     @author_id INT
 AS
@@ -316,10 +265,7 @@ BEGIN
 END;
 GO
 
--- test get manga by author id
-EXEC get_manga_by_author_id 1;
-
--- tao view de lay ra tat ca cac manga da tao
+-- 1
 CREATE VIEW view_all_mangas AS
 SELECT 
     m.id AS manga_id,
@@ -336,10 +282,7 @@ JOIN
     users u ON m.author_id = u.id;
 GO
 
--- test view all mangas
-SELECT * FROM view_all_mangas;
-
--- Tạo logic để lấy ra thông tin của một manga với @manga_id
+-- 1
 CREATE PROCEDURE get_manga_by_id
     @manga_id INT
 AS
@@ -348,11 +291,10 @@ BEGIN
 
     SELECT * FROM view_all_mangas WHERE manga_id = @manga_id;
 END;
+GO
 
--- test get manga by id
-EXEC get_manga_by_id 1;
 
--- lấy ra id của user tạo ra một manga với @manga_id
+-- 1
 CREATE PROCEDURE get_author_id_by_manga_id
     @manga_id INT
 AS
@@ -361,13 +303,9 @@ BEGIN
 
     SELECT author_id FROM mangas WHERE id = @manga_id;
 END;
+GO
 
--- test get author id by manga id
-EXEC get_author_id_by_manga_id 1;
-
--- update manga
--- chỉ cho phép update name, summary, manga_cover_image_data và updated_at và genre
-
+-- 1
 CREATE PROCEDURE update_manga
     @manga_id INT,
     @name NVARCHAR(255),
@@ -405,18 +343,16 @@ BEGIN
     INSERT INTO manga_genre (manga_id, genre_id)
     SELECT @manga_id, id FROM genres WHERE name = @genre;
 END;
-
--- test update manga
-EXEC update_manga 11, 'One Piece', 'A pirate adventure manga', 0x, 'Action, Adventure, Comedy';
+GO
 
 CREATE INDEX idx_manga_name ON mangas(name);
+GO
 
-SELECT * FROM mangas WHERE name LIKE '%na%';
-
+------------------------------------------------------
 ------------------------------------------------------
 -- Chapter logic -------------------------------------
 
--- create stored chapter
+-- 1
 CREATE PROCEDURE insert_chapter
     @manga_id INT,
     @name NVARCHAR(255),
@@ -433,10 +369,10 @@ BEGIN
     SET updated_at = GETDATE()
     WHERE id = @manga_id;
 END;
--- test insert chapter
-EXEC insert_chapter 1, 'Chapter 1', 1, 0x;
+GO
 
 
+-- 1
 CREATE TRIGGER check_chapter_number_insert
 ON chapters
 AFTER INSERT
@@ -474,7 +410,9 @@ BEGIN
     SET number = number + 1
     WHERE manga_id = @manga_id AND number >= @number AND id <> (SELECT id FROM inserted);
 END;
+GO
 
+-- 1
 CREATE TRIGGER check_chapter_number_delete
 ON chapters
 AFTER DELETE
@@ -492,24 +430,10 @@ BEGIN
     SET number = number - 1
     WHERE manga_id = @manga_id AND number > @number;
 END;
+GO
 
 
-
--- -- create stored procedure to get chapter by manga id
--- CREATE PROCEDURE get_chapters_by_manga_id
---     @manga_id INT
--- AS
--- BEGIN
---     SET NOCOUNT ON;
-
---     SELECT * FROM chapters WHERE manga_id = @manga_id ORDER BY number ASC;
--- END;
--- GO
-
--- -- test get chapters by manga id
--- EXEC get_chapters_by_manga_id 1;
-
--- tạo view để lấy ra tất cả các chapter của một manga
+-- 1
 CREATE VIEW view_all_chapters AS
 SELECT 
     c.id AS chapter_id,
@@ -524,11 +448,9 @@ FROM
     chapters c
 JOIN
     mangas m ON c.manga_id = m.id;
+GO
 
--- test view all chapters
-SELECT * FROM view_all_chapters;
-
--- tạo get_chapters_by_manga_id sử dụng view_all_chapters
+-- 1
 CREATE PROCEDURE get_chapters_by_manga_id
     @manga_id INT
 AS
@@ -539,15 +461,7 @@ BEGIN
 END;
 GO
 
--- test get chapters by manga id
-EXEC get_chapters_by_manga_id 1;
-
--- drop get_chapters_by_manga_id
-DROP PROCEDURE get_chapters_by_manga_id;
-
--- tạo một logic nhận vào @manga_id và @chapter_id và trả về id của chapter có number trước đó và sau đó
--- sử dụng get_chapters_by_manga_id (đã sắp sếp theo mumber tăng dần) để lấy ra tất cả các chapter của manga đó
--- Add missing import statement for the 'chapters' table
+-- 1
 CREATE PROCEDURE get_previous_and_next_chapter_id
     @chapter_id INT
 AS
@@ -563,15 +477,15 @@ BEGIN
         (SELECT TOP 1 id FROM chapters WHERE manga_id = @manga_id AND number < @current_chapter_number ORDER BY number DESC) AS previous_chapter_id,
         (SELECT TOP 1 id FROM chapters WHERE manga_id = @manga_id AND number > @current_chapter_number ORDER BY number ASC) AS next_chapter_id;
 END;
--- test get previous and next chapter id
-EXEC get_previous_and_next_chapter_id 1;
+GO
 
--- tạo view để lấy ra id và chapter_image_data của một chapter
+
+-- 1
 CREATE VIEW view_chapter_image_data AS
 SELECT id, chapter_image_data FROM chapters;
 GO
 
--- get chapter image data by chapter id
+-- 1
 CREATE PROCEDURE get_chapter_image_data_by_id
     @chapter_id INT
 AS
@@ -580,8 +494,9 @@ BEGIN
 
     SELECT * FROM view_chapter_image_data WHERE id = @chapter_id;
 END;
+GO
 
--- Delete chapter by id and manga_id
+-- 1
 CREATE PROCEDURE delete_chapter
     @manga_id INT,
     @chapter_id INT
@@ -595,10 +510,10 @@ BEGIN
     SET updated_at = GETDATE()
     WHERE id = @manga_id;
 END;
+GO
 
--- test delete chapter
-EXEC delete_chapter 1, 1;
 
+-- 1
 CREATE PROCEDURE delete_manga
     @manga_id INT
 AS
@@ -618,15 +533,12 @@ BEGIN
     DELETE FROM manga_genre WHERE manga_id = @manga_id;
     DELETE FROM mangas WHERE id = @manga_id;
 END;
--- test delete manga
-EXEC delete_manga 1;
-
--- tìm kiếm theo tên manga
+GO
 
 ------------------------------------------------------
 -- User - Manga logic -------------------------------
 
--- thêm is_favorite = 1 với @user_id và @manga_id
+-- 1
 CREATE PROCEDURE add_favorite_manga
     @user_id INT,
     @manga_id INT
@@ -639,10 +551,7 @@ BEGIN
 END;
 GO
 
--- test add favorite manga
-EXEC add_favorite_manga 1, 1;
-
--- khi thêm chapter mới thì thêm notification cho tất cả user is_favorite manga đó sử dụng trigger
+-- 1
 CREATE TRIGGER add_notification_on_insert_chapter
 ON chapters
 AFTER INSERT
@@ -665,37 +574,15 @@ BEGIN
 END;
 GO
 
--- test trigger
-EXEC insert_chapter 1, 'Chapter 2', 2;
-
 ------------------------------------------------------
 -- Genre logic ---------------------------------------
 
--- tao view de lay ra tat ca cac ten genre
+-- 1
 CREATE VIEW view_all_genres AS
 SELECT name FROM genres;
 GO
 
--- logic lay ra tat ca cac view_all_genres
-SELECT * FROM view_all_genres;
-
--- logic de tao manga_genre tu manga_id va genre.name
-CREATE PROCEDURE insert_manga_genre
-    @manga_id INT,
-    @genre_name NVARCHAR(255)
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    DECLARE @genre_id INT;
-
-    SELECT @genre_id = id FROM genres WHERE name = @genre_name;
-
-    INSERT INTO manga_genre (manga_id, genre_id)
-    VALUES (@manga_id, @genre_id);
-END;
-
--- lấy ra tất cả các genre của một manga sư dụng view_all_genres
+-- 1
 CREATE PROCEDURE get_genres_by_manga_id
     @manga_id INT
 AS
@@ -705,14 +592,12 @@ BEGIN
     SELECT name FROM view_all_genres
     WHERE name IN (SELECT name FROM genres WHERE id IN (SELECT genre_id FROM manga_genre WHERE manga_id = @manga_id));
 END;
-
--- test get genres by manga id
-EXEC get_genres_by_manga_id 1;
+GO
 
 ------------------------------------------------------
 -- User logic ----------------------------------------
 
--- Tạo view để lấy ra thông tin của các user gồm name, email, role, avatar_image_data, created_at và id
+-- 1
 CREATE VIEW view_all_users AS
 SELECT 
     id,
@@ -723,12 +608,9 @@ SELECT
     created_at
 FROM
     users;
+GO
 
--- test view all users
-SELECT * FROM view_all_users;
-
--- Tạo stored procedure để lấy ra thông tin của một user với @id
-
+-- 1
 CREATE PROCEDURE get_user_by_id
     @id INT
 AS
@@ -739,10 +621,7 @@ BEGIN
 END;
 GO
 
--- test get user by id
-EXEC get_user_by_id 1;
-
--- view notifications
+-- 1
 CREATE VIEW view_notifications AS
 SELECT 
     n.id AS notification_id,
@@ -763,11 +642,9 @@ JOIN
     mangas m ON n.manga_id = m.id
 LEFT JOIN
     chapters c ON n.chapter_id = c.id;
+GO
 
--- test view notifications
-SELECT * FROM view_notifications;
-
--- get notifications by user id
+-- 1
 CREATE PROCEDURE get_notifications_by_user_id
     @user_id INT
 AS
@@ -776,11 +653,9 @@ BEGIN
 
     SELECT * FROM view_notifications WHERE user_id = @user_id;
 END;
+GO
 
--- test get notifications by user id   
-EXEC get_notifications_by_user_id 1;
-
--- mark notification as read
+-- 1
 CREATE PROCEDURE mark_notification_as_read
     @notification_id INT
 AS
@@ -791,11 +666,9 @@ BEGIN
     SET read_at = GETDATE()
     WHERE id = @notification_id;
 END;
+GO
 
--- test mark notification as read
-EXEC mark_notification_as_read 1;
-
--- insert comment
+-- 1
 CREATE PROCEDURE insert_comment
     @user_id INT,
     @manga_id INT,
@@ -807,11 +680,9 @@ BEGIN
     INSERT INTO comments (user_id, manga_id, comment)
     VALUES (@user_id, @manga_id, @comment);
 END;
+GO
 
--- test insert comment
-EXEC insert_comment 1, 1, 'This is a comment';
-
--- view comments
+-- 1
 CREATE VIEW view_comments AS
 SELECT 
     c.id AS comment_id,
@@ -829,22 +700,10 @@ JOIN
     users u ON c.user_id = u.id
 JOIN
     mangas m ON c.manga_id = m.id;
-
--- get manga by genre
-CREATE PROCEDURE get_mangas_by_genre
-    @genre_name NVARCHAR(255)
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    SELECT * FROM view_all_mangas WHERE genre_name = @genre_name;
-END;
-
--- test get mangas by genre
-EXEC get_mangas_by_genre 'Action';
+GO
 
 
--- delete user by id
+-- 0
 CREATE PROCEDURE delete_user
     @user_id INT
 AS
@@ -862,6 +721,14 @@ BEGIN
 
     DELETE FROM users WHERE id = @user_id;
 END;
+GO
 
--- test delete user
-EXEC delete_user 1;
+-- -- 0 -- sai
+-- CREATE PROCEDURE get_mangas_by_genre
+--     @genre_name NVARCHAR(255)
+-- AS
+-- BEGIN
+--     SET NOCOUNT ON;
+
+--     SELECT * FROM view_all_mangas WHERE genre_name = @genre_name;
+-- END;
