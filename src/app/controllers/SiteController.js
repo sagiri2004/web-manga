@@ -75,6 +75,8 @@ class SiteController {
           )}`;
         });
 
+        //console.log(mangas);
+
         res.render("search", { mangas, searchQuery });
       });
     });
@@ -134,7 +136,12 @@ class SiteController {
           manga.manga_cover_image_data = `data:image/png;base64,${manga.manga_cover_image_data.toString(
             "base64"
           )}`;
+
+          manga.id = manga.manga_id;
+          manga.name = manga.manga_name;
         });
+
+        //console.log(mangas);
 
         res.render("search", { mangas });
       });
