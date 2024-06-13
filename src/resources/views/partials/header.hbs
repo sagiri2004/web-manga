@@ -101,6 +101,9 @@
                                 <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
                             </form>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/advanced_search">Advanced search</a>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <img src="{{myUser.image}}" alt="" class="user-avatar" />
@@ -108,6 +111,9 @@
                             </a>
                             <div class="dropdown-menu">
                                 <a class="dropdown-item" href="/user/my-created-manga">My Manga</a>
+                                {{#isAdmin myUser.role}}
+                                    <a class="dropdown-item" href="/user/admin">Admin</a>
+                                {{/isAdmin}}
                                 <a class="dropdown-item" href="#" onclick="document.getElementById('logoutForm').submit();">Logout</a>
                             </div>
                         </li>
@@ -137,6 +143,9 @@
                                 <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" name="query" required>
                                 <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
                             </form>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/advanced_search">Advanced search</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/auth/register">Register</a>

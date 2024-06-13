@@ -1,5 +1,14 @@
 <div class="container mt-5">
-    <h1 class="mb-4">Search results for "{{searchQuery}}"</h1>
+    {{#if searchQuery}}
+        <h1 class="mb-4">Search results for "{{searchQuery}}"</h1>
+        {{#if searchResults.length}}
+            <!-- Display search results here -->
+        {{else}}
+            <p>No results found for "{{searchQuery}}".</p>
+        {{/if}}
+    {{else}}
+        <h1 class="mb-4">Search</h1>
+    {{/if}}
     <div class="row">
         {{#each mangas}}
         <div class="col-md-4">

@@ -1,0 +1,32 @@
+<style>
+    .container_body {
+        background-color: #333; /* Darker background for the container */
+        padding: 20px;
+        border-radius: 10px;
+    }
+    h1 {
+        color: #007bff; /* Blue heading */
+    }
+</style>
+
+<div class="container container_body mt-5 text-white">
+    <h1 class="my-4">{{genre}}</h1>
+    <div class="row">
+        {{#each mangas}}
+        <div class="col-lg-3 col-md-4 col-sm-6 col-12 mb-4">
+            <div class="card h-100">
+                <img class="card-img-top manga-cover" src="{{this.manga_cover_image_data}}" alt="{{this.manga_name}} cover image">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">
+                        <a href="/manga/{{this.manga_id}}" class="card-link">{{this.manga_name}}</a>
+                    </h5>
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        <a href="/user/{{this.author_id}}">{{this.author_name}}</a>
+                    </h6>
+                    <p class="card-text flex-grow-1">{{this.summary}}</p>
+                </div>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+</div>

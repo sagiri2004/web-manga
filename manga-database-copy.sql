@@ -203,7 +203,6 @@ BEGIN
 END;
 GO
 
-
 -- 1
 CREATE INDEX idx_user_id ON users(id);
 GO
@@ -602,10 +601,12 @@ CREATE VIEW view_all_users AS
 SELECT 
     id,
     name,
+    username,
     email,
     role,
     avatar_image_data,
-    created_at
+    created_at,
+    is_banned
 FROM
     users;
 GO
@@ -723,12 +724,59 @@ BEGIN
 END;
 GO
 
--- -- 0 -- sai
--- CREATE PROCEDURE get_mangas_by_genre
---     @genre_name NVARCHAR(255)
--- AS
--- BEGIN
---     SET NOCOUNT ON;
+-- get_manga_by_genre su dung view_all_mangas va view_all_genres
+-- 1
+CREATE PROCEDURE get_manga_by_genre
+    @genre NVARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
 
---     SELECT * FROM view_all_mangas WHERE genre_name = @genre_name;
--- END;
+    SELECT * FROM view_all_mangas
+    WHERE author_id IN (SELECT id FROM users WHERE is_banned = 0)
+    AND manga_id IN (SELECT manga_id FROM manga_genre WHERE genre_id IN (SELECT id FROM genres WHERE name = @genre));
+END;
+
+
+-- 1
+-- set quyen admin cho user
+CREATE PROCEDURE set_admin_role
+    @user_id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE users
+    SET role = 'admin'
+    WHERE id = @user_id;
+END;
+
+-- 1
+CREATE FUNCTION GetMangasByGenreIds (@genre_ids NVARCHAR(MAX))
+RETURNS TABLE
+AS
+RETURN 
+(
+    SELECT 
+        m.id AS manga_id,   
+        m.name AS manga_name,
+        m.author_id,
+        m.manga_cover_image_data,
+        m.summary,
+        m.created_at,
+        m.updated_at
+    FROM 
+        mangas m
+    INNER JOIN 
+        manga_genre mg ON m.id = mg.manga_id
+    INNER JOIN 
+        genres g ON mg.genre_id = g.id
+    WHERE 
+        g.id IN (SELECT value FROM STRING_SPLIT(@genre_ids, ','))
+);
+
+-- 1
+-- view_all_genres_2 lay ra ca id
+CREATE VIEW view_all_genres_2 AS
+SELECT * FROM genres;
+GO

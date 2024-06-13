@@ -3,6 +3,7 @@ const router = express.Router();
 const mangaController = require("../app/controllers/MangaController");
 
 router.post("/submitComment", mangaController.submitComment);
+router.get("/genres/:id", mangaController.getMangaByGenre);
 router.delete("/deleteManga/:id", mangaController.deleteManga)
 router.delete("/deleteChapter/:mangaid/:chapterid", mangaController.deleteChapter);
 router.get("/create/:id", mangaController.getCreateChapter);

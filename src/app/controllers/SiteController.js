@@ -25,6 +25,7 @@ class SiteController {
 
         // nếu người dùng đã đăng nhập thì sẽ truyền notifications
         const token = req.cookies.token;
+        console.log(token);
 
         if (token) {
           const userId = decodeToken(token).user_id;
@@ -78,6 +79,69 @@ class SiteController {
       });
     });
   }
+
+  // [GET] tim kiem nang cao
+  getAdvancedSearch(req, res) {
+    // get all genres
+    conn(async (err, conn) => {
+      if (err) {
+        console.error("Error occurred while connecting to the database:", err);
+        return;
+      }
+
+      const query = `SELECT * FROM view_all_genres_2`;
+      conn.query(query, (err, genres) => {
+        if (err) {
+          console.error("Error occurred while executing the query:", err);
+          return;
+        }
+        //console.log(genres);
+
+        res.render("advanceSearch", { genres });
+      });
+    });
+  }
+
+  // [POST] tim kiem nang cao
+  advancedSearch(req, res) {
+    const { genres } = req.body;
+    // chuyển genres từ array sang string
+    let genresString = "";
+    genresString += `'`;
+    genres.forEach((genre, index) => {
+      genresString += `${genre}`;
+      if (index !== genres.length - 1) {
+        genresString += ",";
+      }
+    });
+    genresString += `'`;
+    // res.send(genresString);
+
+    const query = `SELECT * FROM GetMangasByGenreIds(${genresString})`;
+    conn(async (err, conn) => {
+      if (err) {
+        console.error("Error occurred while connecting to the database:", err);
+        return;
+      }
+      conn.query(query, (err, mangas) => {
+        if (err) {
+          console.error("Error occurred while executing the query:", err);
+          return;
+        }
+
+        // chuyển manga_cover_image_data từ buffer sang base64 và + thêm string 'data:image/png;base64,'
+        mangas.forEach((manga) => {
+          manga.manga_cover_image_data = `data:image/png;base64,${manga.manga_cover_image_data.toString(
+            "base64"
+          )}`;
+        });
+
+        res.render("search", { mangas });
+      });
+
+    });
+  }
+
 }
 
 module.exports = new SiteController();

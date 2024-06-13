@@ -3,6 +3,7 @@
 const { conn } = require("../../config/database");
 // const fs = require("fs");
 const { decodeToken } = require("../../util/tokenUtil");
+const { formatDate } = require("../../util/dateUtil");
 
 // const storage = multer.diskStorage({
 //   destination: function (req, file, cb) {
@@ -37,8 +38,9 @@ class UserController {
             "data:image/png;base64," +
             Buffer.from(manga.manga_cover_image_data, "hex").toString("base64"),
           summary: manga.summary,
-          createdAt: manga.created_at,
-          updatedAt: manga.updated_at,
+          // su dung ham formatDate tu dateUtil.js
+          createdAt: formatDate(manga.created_at),
+          updatedAt: formatDate(manga.updated_at),
         }));
 
         res.render("user/myCreatedManga", { mangas });
@@ -75,9 +77,13 @@ class UserController {
                 "base64"
               ),
             summary: manga.summary,
-            createdAt: manga.created_at,
-            updatedAt: manga.updated_at,
+            // su dung ham formatDate tu dateUtil.js
+            createdAt: formatDate(manga.created_at),
+            updatedAt: formatDate(manga.updated_at),
           }));
+
+          // su dung ham formatDate tu dateUtil.js
+          userData.created_at = formatDate(userData.created_at);
 
           res.render("user/userProfile", { user: userData, mangaList });
         });
@@ -126,12 +132,112 @@ class UserController {
           res.status(500).json({ message: "Internal server error" });
           return;
         }
-        
+
         res.redirect("/");
       });
     });
   }
 
+  // [GET] lay tat ca cac user
+  async getAllUser(req, res) {
+    // check is admin
+    const token = req.cookies.token;
+    //console.log(token);
+    // token = null => chua login
+    if (!token) {
+      // chuyen ve trang login
+      return res.redirect("/auth/login");
+    } else {
+      const { user_id, role } = decodeToken(token);
+      if (role !== "admin") {
+        res.status(403).json({ message: "Forbidden" });
+        return;
+      } else {
+        const query = `SELECT * FROM view_all_users`;
+        conn((err, conn) => {
+          conn.query(query, (err, result) => {
+            if (err) {
+              res.status(500).json({ message: "Internal server error" });
+              return;
+            }
+
+            const users = result.map((user) => ({
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              role: user.role,
+              is_banned: user.is_banned,
+              avatarImageData:
+                "data:image/png;base64," +
+                Buffer.from(user.avatar_image_data, "hex").toString("base64"),
+              //su dung ham formatDate tu dateUtil.js
+              createdAt: formatDate(user.created_at),
+            }));
+
+            res.render("user/allUser", { users });
+          });
+        });
+      }
+    }
+  }
+
+  // [POST] ban user
+  async ban(req, res) {
+    // check is admin
+    const token = req.cookies.token;
+    if (!token) {
+      res.status(403).json({ message: "Forbidden" });
+      return;
+    }
+
+    const { role } = decodeToken(token);
+    if (role !== "admin") {
+      res.status(403).json({ message: "Forbidden" });
+      return;
+    }
+
+    const userId = req.params.id;
+    const query = `EXEC ban_user ${userId}`;
+    conn((err, conn) =>
+      conn.query(query, (err, result) => {
+        if (err) {
+          res.status(500).json({ message: "Internal server error" });
+          return;
+        }
+
+        res.redirect("/user/admin");
+      })
+    );
+  }
+
+  // [POST] unban user
+  async unban(req, res) {
+    // check is admin
+    const token = req.cookies.token;
+    if (!token) {
+      res.status(403).json({ message: "Forbidden" });
+      return;
+    }
+
+    const { role } = decodeToken(token);
+    if (role !== "admin") {
+      res.status(403).json({ message: "Forbidden" });
+      return;
+    }
+
+    const userId = req.params.id;
+    const query = `EXEC unban_user ${userId}`;
+    conn((err, conn) =>
+      conn.query(query, (err, result) => {
+        if (err) {
+          res.status(500).json({ message: "Internal server error" });
+          return;
+        }
+
+        res.redirect("/user/admin");
+      })
+    );
+  }
 }
 
 module.exports = new UserController();

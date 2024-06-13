@@ -1,0 +1,42 @@
+<body>
+    <div class="container mt-5">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Is Banned</th>
+                    <th>Avatar</th>
+                    <th>Created At</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each users}}
+                <tr>
+                    <td>{{this.id}}</td>
+                    <td>{{this.username}}</td>
+                    <td>{{this.email}}</td>
+                    <td>{{this.role}}</td>
+                    <td>{{this.is_banned}}</td>
+                    <td><img src="{{this.avatarImageData}}" alt="Avatar" width="50" height="50"></td>
+                    <td>{{this.createdAt}}</td>
+                    <td>
+                        {{#if this.is_banned}}
+                            <form action="/user/unban/{{this.id}}" method="POST">
+                                <button type="submit" class="btn btn-warning">Unban</button>
+                            </form>
+                        {{else}}
+                            <form action="/user/ban/{{this.id}}" method="POST">
+                                <button type="submit" class="btn btn-danger">Ban</button>
+                            </form>
+                        {{/if}}
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</body>

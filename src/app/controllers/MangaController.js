@@ -438,5 +438,31 @@ class MangaController {
       });
     });
   }
+
+  // get manga by genre
+  async getMangaByGenre(req, res) {
+    const genre = req.params.id;
+    conn(async (err, conn) => {
+      if (err) {
+        console.error("Error occurred while connecting to the database:", err);
+        return;
+      }
+      const query = `EXEC get_manga_by_genre ${genre}`;
+      conn.query(query, (err, mangas) => {
+        if (err) {
+          console.error("Error occurred while executing the query:", err);
+          return;
+        }
+        // them string data:image/png;base64, vào trước manga_cover_image_data
+        mangas.forEach((manga) => {
+          manga.manga_cover_image_data = `data:image/png;base64,${manga.manga_cover_image_data.toString(
+            "base64"
+          )}`;
+        });
+
+        res.render("manga/mangaGenre", { mangas, genre });
+      });
+    });
+  }
 }
 module.exports = new MangaController();

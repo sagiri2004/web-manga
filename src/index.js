@@ -32,6 +32,9 @@ app.engine(
             return options.inverse(this);
         }
       },
+      isAdmin: function (v1, options) {
+        return v1 === "admin" ? options.fn(this) : options.inverse(this);
+      },
     },
   })
 );
