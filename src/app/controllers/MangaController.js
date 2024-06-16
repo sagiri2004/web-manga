@@ -213,13 +213,39 @@ class MangaController {
               for (let i = 0; i < comments.length; i++) {
                 comments[i].created_at = formatDate(comments[i].created_at);
               }
+              const ratings = [
+                { value: 1, label: "1 star", selected: false },
+                { value: 2, label: "2 stars", selected: false },
+                { value: 3, label: "3 stars", selected: false },
+                { value: 4, label: "4 stars", selected: false },
+                { value: 5, label: "5 stars", selected: false },
+              ];
 
-              res.render("manga/manga", {
-                manga,
-                chapters,
-                genres,
-                comments,
-                message,
+              const query5 = `SELECT dbo.get_average_rating(${mangaId});`;
+              conn.query(query5, (err, averageRating) => {
+                if (err) {
+                  console.error(
+                    "Error occurred while executing the fifth query:",
+                    err
+                  );
+                  return;
+                }
+                //console.log(averageRating); 
+
+                averageRating = averageRating[0].Column0;
+
+                //console.log(averageRating); 
+
+
+                res.render("manga/manga", {
+                  manga,
+                  chapters,
+                  genres,
+                  comments,
+                  message,
+                  ratings,
+                  averageRating,
+                });
               });
             });
           });
@@ -460,7 +486,42 @@ class MangaController {
           )}`;
         });
 
-        res.render("manga/mangaGenre", { mangas, genre });
+        // lay ra description cua genre
+        const query2 = `SELECT * FROM view_all_genres_2 WHERE name = '${genre}'`;
+        conn.query(query2, (err, genre) => {
+          if (err) {
+            console.error("Error occurred while executing the query:", err);
+            return;
+          }
+          //console.log(genre);
+          genre = genre[0];
+          res.render("manga/mangaGenre", { mangas, genre });
+        });
+      });
+    });
+  }
+
+  // [GET] top rating manga
+  async getTopRatingManga(req, res) {
+    conn(async (err, conn) => {
+      if (err) {
+        console.error("Error occurred while connecting to the database:", err);
+        return;
+      }
+      const query = `SELECT * FROM view_all_mangas ORDER BY average_rating DESC`;
+      conn.query(query, (err, mangas) => {
+        if (err) {
+          console.error("Error occurred while executing the query:", err);
+          return;
+        }
+        // them string data:image/png;base64, vào trước manga_cover_image_data
+        mangas.forEach((manga) => {
+          manga.manga_cover_image_data = `data:image/png;base64,${manga.manga_cover_image_data.toString(
+            "base64"
+          )}`;
+        });
+
+        res.render("manga/topRatingManga", { mangas });
       });
     });
   }

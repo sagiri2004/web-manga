@@ -1,0 +1,33 @@
+<div class="container container_body mt-5 text-white">
+    <h1 class="my-4">Top Rated Mangas</h1>
+    <table class="table table-dark table-striped">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Cover</th>
+                <th scope="col">Manga Name</th>
+                <th scope="col">Author</th>
+                <th scope="col">Summary</th>
+                <th scope="col">Rating</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each mangas}}
+            <tr>
+                <th scope="row">{{index @index}}</th>
+                <td>
+                    <img src="{{this.manga_cover_image_data}}" alt="{{this.manga_name}} cover image" style="width: 100px;">
+                </td>
+                <td>
+                    <a href="/manga/{{this.manga_id}}" class="text-white">{{this.manga_name}}</a>
+                </td>
+                <td>
+                    <a href="/user/{{this.author_id}}" class="text-white">{{this.author_name}}</a>
+                </td>
+                <td>{{this.summary}}</td>
+                <td><strong>{{#if this.average_rating}}{{this.average_rating}}{{else}}NULL{{/if}}</strong></td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>

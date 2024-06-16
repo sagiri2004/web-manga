@@ -105,7 +105,7 @@ class UserController {
 
     const { user_id } = decodeToken(token);
 
-    const query = `EXEC add_favorite_manga ${user_id}, ${mangaId}`;
+    const query = `EXEC update_favorite_status ${user_id}, ${mangaId}, 1`;
     conn((err, conn) => {
       conn.query(query, (err, result) => {
         if (err) {
@@ -121,6 +121,39 @@ class UserController {
       });
     });
   }
+
+  async removeFavoriteManga(req, res) {
+    const token = req.cookies.token;
+    const mangaId = req.params.id;
+
+    if (!token) {
+      res.cookie("message", "Please log in to remove manga from favorites", {
+        maxAge: 5000,
+      });
+      res.redirect(`/manga/${mangaId}`);
+      return;
+    }
+
+    const { user_id } = decodeToken(token);
+
+    const query = `EXEC update_favorite_status ${user_id}, ${mangaId}, 0`;
+
+    conn((err, conn) => {
+      conn.query(query, (err, result) => {
+        if (err) {
+          res.cookie("message", "Failed to remove manga from favorites", {
+            maxAge: 5000,
+          });
+          return res.redirect(`/manga/${mangaId}`);
+        }
+        res.cookie("message", "Removed manga from favorites successfully", {
+          maxAge: 5000,
+        });
+        return res.redirect(`/manga/${mangaId}`);
+      });
+    });
+  }
+
 
   // [PUT] để đánh dấu đã đọc thông báo
   async markAsReadNotice(req, res) {
@@ -235,6 +268,32 @@ class UserController {
         }
 
         res.redirect("/user/admin");
+      })
+    );
+  }
+
+  async updateRating(req, res) {
+    const token = req.cookies.token;
+    if (!token) {
+      res.status(403).json({ message: "Forbidden" });
+      return;
+    }
+
+    const { user_id } = decodeToken(token);
+    const mangaId = req.body.manga_id;
+    const rating = req.body.rating;
+
+    //console.log(user_id, mangaId, rating);
+
+    const query = `EXEC update_rating ${user_id}, ${mangaId}, ${rating}`;
+    conn((err, conn) =>
+      conn.query(query, (err, result) => {
+        if (err) {
+          res.status(500).json({ message: "Internal server error" });
+          return;
+        }
+
+        res.redirect(`/manga/${mangaId}`);
       })
     );
   }

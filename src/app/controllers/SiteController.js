@@ -25,8 +25,7 @@ class SiteController {
 
         // nếu người dùng đã đăng nhập thì sẽ truyền notifications
         const token = req.cookies.token;
-        console.log(token);
-
+        //console.log(token);
         if (token) {
           const userId = decodeToken(token).user_id;
           const query = `EXEC get_notifications_by_user_id ${userId}`;

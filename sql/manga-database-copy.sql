@@ -107,6 +107,59 @@ INSERT INTO genres (name) VALUES ('Slice of Life');
 INSERT INTO genres (name) VALUES ('Supernatural');
 GO
 
+
+UPDATE genres
+SET description = 'High-energy scenes, intense sequences'
+WHERE id = 1;
+
+UPDATE genres
+SET description = 'Exciting journeys, exploration, and discovery'
+WHERE id = 2;
+
+UPDATE genres
+SET description = 'Humorous content intended to entertain'
+WHERE id = 3;
+
+UPDATE genres
+SET description = 'Serious narratives, emotional depth'
+WHERE id = 4;
+
+UPDATE genres
+SET description = 'Magical worlds, mythical creatures'
+WHERE id = 5;
+
+UPDATE genres
+SET description = 'Scary themes, suspense, and horror elements'
+WHERE id = 6;
+
+UPDATE genres
+SET description = 'Intrigue, puzzles, and mysterious situations'
+WHERE id = 7;
+
+UPDATE genres
+SET description = 'Focus on mental and emotional conflict'
+WHERE id = 8;
+
+UPDATE genres
+SET description = 'Love stories, romantic relationships'
+WHERE id = 9;
+
+UPDATE genres
+SET description = 'Futuristic themes, advanced technology'
+WHERE id = 10;
+
+UPDATE genres
+SET description = 'Everyday life and relatable experiences'
+WHERE id = 11;
+
+UPDATE genres
+SET description = 'Supernatural phenomena and otherworldly elements'
+WHERE id = 12;
+GO
+
+CREATE INDEX idx_name ON genres (name);
+GO
+
 ------------------------------------------------------
 -- User logic ----------------------------------------
 
@@ -304,11 +357,23 @@ SELECT
     m.summary,
     m.manga_cover_image_data,
     m.created_at,
-    m.updated_at
+    m.updated_at,
+    CAST(AVG(CAST(um.rating AS DECIMAL(5, 2))) AS DECIMAL(5, 2)) AS average_rating
 FROM 
     mangas m
 JOIN 
-    users u ON m.author_id = u.id;
+    users u ON m.author_id = u.id
+LEFT JOIN 
+    users_mangas um ON m.id = um.manga_id
+GROUP BY
+    m.id,
+    m.author_id,
+    m.name,
+    u.name,
+    m.summary,
+    m.manga_cover_image_data,
+    m.created_at,
+    m.updated_at;
 GO
 
 -- 1
@@ -598,18 +663,72 @@ GO
 
 -- 1
 -- huy
--- add_favorite_manga stored procedure dung de them manga vao danh sach yeu thich cua user
-CREATE PROCEDURE add_favorite_manga
+-- update_favorite_status stored procedure dung de update trang thai favorite cua user voi manga
+CREATE PROCEDURE update_favorite_status
     @user_id INT,
-    @manga_id INT
+    @manga_id INT,
+    @is_favorite BIT
+AS
+BEGIN
+    -- Nếu đã tồn tại, cập nhật trạng thái favorite
+    SET NOCOUNT ON;
+    IF EXISTS (SELECT 1 FROM users_mangas WHERE user_id = @user_id AND manga_id = @manga_id)
+    BEGIN
+        UPDATE users_mangas
+        SET is_favorite = @is_favorite
+        WHERE user_id = @user_id AND manga_id = @manga_id;
+    END
+    ELSE
+    BEGIN
+        -- Nếu chưa tồn tại, thêm mới thông tin với is_favorite được cung cấp
+        INSERT INTO users_mangas (user_id, manga_id, is_favorite, rating)
+        VALUES (@user_id, @manga_id, @is_favorite, NULL);
+    END
+END;
+GO
+
+-- 1
+-- huy
+-- update_rating stored procedure dung de update rating cua user voi manga
+CREATE PROCEDURE update_rating
+    @user_id INT,
+    @manga_id INT,
+    @rating INT
+AS
+BEGIN
+    -- Nếu đã tồn tại, cập nhật rating
+    SET NOCOUNT ON;
+    IF EXISTS (SELECT 1 FROM users_mangas WHERE user_id = @user_id AND manga_id = @manga_id)
+    BEGIN
+        UPDATE users_mangas
+        SET rating = @rating
+        WHERE user_id = @user_id AND manga_id = @manga_id;
+    END
+    ELSE
+    BEGIN
+        -- Nếu chưa tồn tại, thêm mới thông tin với rating được cung cấp
+        INSERT INTO users_mangas (user_id, manga_id, is_favorite, rating)
+        VALUES (@user_id, @manga_id, NULL, @rating);
+    END
+END;
+GO
+
+-- 1
+-- huy
+-- tao trigger de khi rating duoc update hoac insert thi khong lon hon 5 va nho hon 0
+CREATE TRIGGER check_rating_range
+ON users_mangas
+AFTER INSERT, UPDATE
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    INSERT INTO users_mangas (user_id, manga_id, is_favorite)
-    VALUES (@user_id, @manga_id, 1);
+    IF EXISTS (SELECT 1 FROM inserted WHERE rating > 5 OR rating < 0)
+    BEGIN
+        RAISERROR('Rating must be between 0 and 5.', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
 END;
-GO
 
 -- 1
 -- huy
@@ -636,6 +755,22 @@ BEGIN
 END;
 GO
 
+-- 1
+-- huy
+-- Function để lấy ra rating trung bình của một manga
+CREATE FUNCTION get_average_rating (@manga_id INT)
+RETURNS DECIMAL(5, 2)
+AS
+BEGIN
+    DECLARE @averageRating DECIMAL(5, 2);
+
+    SELECT @averageRating = CAST(AVG(CAST(rating AS DECIMAL(5, 2))) AS DECIMAL(5, 2))
+    FROM users_mangas
+    WHERE manga_id = @manga_id AND rating IS NOT NULL;
+
+    RETURN @averageRating;
+END;
+GO
 ------------------------------------------------------
 -- Genre logic ---------------------------------------
 

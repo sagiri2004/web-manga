@@ -1,86 +1,97 @@
+<style>
+    .manga-container {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 20px;
+    }
 
-    <style>
-        .manga-container {
-            display: flex;
-            flex-wrap: nowrap;
-            gap: 20px;
-        }
+    .manga-info {
+        flex: 1;
+    }
 
-        .manga-info {
-            flex: 1;
-        }
+    .chapter-list {
+        flex: 1;
+        max-height: 600px;
+        overflow-y: auto;
+        border: 1px solid #444;
+        padding: 15px;
+        background-color: #333;
+        color: #fff;
+    }
 
-        .chapter-list {
-            flex: 1;
-            max-height: 600px;
-            overflow-y: auto;
-            border: 1px solid #444;
-            padding: 15px;
-            background-color: #333;
-            color: #fff;
-        }
+    .manga-cover {
+        width: 100%;
+        height: auto;
+        max-height: 500px;
+        object-fit: cover;
+        margin-bottom: 20px;
+    }
 
-        .manga-cover {
-            width: 100%;
-            height: auto;
-            max-height: 500px;
-            object-fit: cover;
-            margin-bottom: 20px;
-        }
+    .genres {
+        margin-top: 20px;
+    }
 
-        .genres {
-            margin-top: 20px;
-        }
+    .genres a {
+        display: inline-block;
+        margin-right: 10px;
+        margin-bottom: 5px;
+        padding: 5px 10px;
+        background-color: #555;
+        border-radius: 5px;
+        text-decoration: none;
+        color: #00aaff;
+    }
 
-        .genres a {
-            display: inline-block;
-            margin-right: 10px;
-            margin-bottom: 5px;
-            padding: 5px 10px;
-            background-color: #555;
-            border-radius: 5px;
-            text-decoration: none;
-            color: #00aaff;
-        }
+    .genres a:hover {
+        background-color: #00aaff;
+        color: #ffffff;
+    }
 
-        .genres a:hover {
-            background-color: #00aaff;
-            color: #ffffff;
-        }
+    body {
+        background-color: #222;
+        color: #fff;
+    }
 
-        body {
-            background-color: #222;
-            color: #fff;
-        }
+    .card {
+        background-color: #444;
+        color: #fff;
+    }
 
-        .card {
-            background-color: #444;
-            color: #fff;
-        }
+    .list-group-item {
+        background-color: #444;
+        border: 1px solid #555;
+        color: #fff;
+    }
 
-        .list-group-item {
-            background-color: #444;
-            border: 1px solid #555;
-            color: #fff;
-        }
+    .list-group-item a {
+        color: #00aaff;
+    }
 
-        .list-group-item a {
-            color: #00aaff;
-        }
+    .list-group-item a:hover {
+        color: #ffffff;
+    }
 
-        .list-group-item a:hover {
-            color: #ffffff;
-        }
+    .comment-section {
+        margin-top: 20px;
+    }
 
-        .comment-section {
-            margin-top: 20px;
-        }
+    .comment {
+        margin-bottom: 20px;
+    }
 
-        .comment {
-            margin-bottom: 20px;
-        }
-    </style>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    .rating {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+    }
+
+    .rating select {
+        margin-left: 10px;
+        padding: 5px;
+    }
+</style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
 <body>
     <div class="container mt-5">
@@ -95,16 +106,33 @@
                         <form action="/user/add-favorite-manga/{{manga.manga_id}}" method="post">
                             <button type="submit" class="btn btn-primary">Favorite</button>
                         </form>
+                        <form action="/user/remove-favorite-manga/{{manga.manga_id}}" method="post">
+                            <button type="submit" class="btn btn-primary">Remove favorite</button>
+                        </form>
+                        <div class="rating">
+                            <h5>Rating: {{averageRating}}</h5>
+                        </div>
                         <div class="genres">
                             <h5>Genres:</h5>
                             {{#each genres}}
                             <a href="/manga/genres/{{this.name}}">{{this.name}}</a>
                             {{/each}}
                         </div>
+                        {{#if myUser}}
+                        <div class="rating">
+                            <label for="rating">Rate this manga:</label>
+                            <select id="rating" name="rating">
+                                {{#each ratings}}
+                                <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                                {{/each}}
+                            </select>
+                            <button id="submitRating" class="btn btn-primary">Submit</button>
+                        </div>
+                        {{/if}}
                     </div>
                 </div>
 
-                        <h2>Comments</h2>
+                <h2>Comments</h2>
 
                 <!-- Display Comments -->
                 <div id="comments">
@@ -137,8 +165,6 @@
                     <p>Please <a href="/auth/login">log in</a> to leave a comment.</p>
                     {{/if}}
                 </div>
-
-
             </div>
 
             <div class="chapter-list">
@@ -187,6 +213,27 @@
                         },
                         error: function() {
                             alert('Error submitting comment');
+                        }
+                    });
+                }
+            });
+
+            $('#submitRating').on('click', function() {
+                var rating = $('#rating').val();
+                var mangaId = '{{manga.manga_id}}';
+                if (rating) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/user/submit-rating',
+                        data: {
+                            manga_id: mangaId,
+                            rating: rating
+                        },
+                        success: function(response) {
+                            alert('Rating submitted successfully');
+                        },
+                        error: function() {
+                            alert('Error submitting rating');
                         }
                     });
                 }
