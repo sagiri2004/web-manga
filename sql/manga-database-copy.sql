@@ -300,7 +300,7 @@ BEGIN
     VALUES (@name, @author_id, @manga_cover_image_data, @summary);
 
     -- Lay id cua manga vua insert
-    SET @id = SCOPE_IDENTITY();
+    SET @id = SCOPE_IDENTITY(); -- scope_identity tra ve id cua dong vua insert trong pham vi hien tai
 
     -- Ba cau lenh duoi day se insert cac genre cua manga do vao bang manga_genre
     DECLARE @genre NVARCHAR(255); -- Bien nay se chua ten cua genre duoc lay ra tu chuoi genres
@@ -358,7 +358,7 @@ SELECT
     m.manga_cover_image_data,
     m.created_at,
     m.updated_at,
-    CAST(AVG(CAST(um.rating AS DECIMAL(5, 2))) AS DECIMAL(5, 2)) AS average_rating
+    CAST(AVG(CAST(um.rating AS DECIMAL(3, 2))) AS DECIMAL(3, 2)) AS average_rating
 FROM 
     mangas m
 JOIN 
@@ -830,7 +830,6 @@ GO
 
 -- 1
 -- huy
-
 CREATE VIEW view_notifications AS
 SELECT 
     n.id AS notification_id,
@@ -916,7 +915,6 @@ JOIN
     mangas m ON c.manga_id = m.id;
 GO
 
-
 -- 0
 CREATE PROCEDURE delete_user
     @user_id INT
@@ -951,7 +949,6 @@ BEGIN
     WHERE author_id IN (SELECT id FROM users WHERE is_banned = 0)
     AND manga_id IN (SELECT manga_id FROM manga_genre WHERE genre_id IN (SELECT id FROM genres WHERE name = @genre));
 END;
-
 
 -- 1
 -- set quyen admin cho user

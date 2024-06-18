@@ -1,6 +1,10 @@
 # Project
 
-Dự án này được tạo bởi Sagiri và team.
+Dự án này được tạo bởi Nhóm 9 gồm 3 thành viên:
+- Nguyễn Hữu Thắng - 20225763
+- Trần Doãn Huy - 20225859
+- Lại Thành Vinh - 20225954
+
 
 ## Công nghệ sử dụng
 
